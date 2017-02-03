@@ -44,7 +44,7 @@ def main():
     exeversions = tuple(versions.get(v)[0] for v in targetversions)
     executables = tuple(versions.get(v)[1] for v in targetversions)
     convertlys = tuple(exe[:-8] + 'convert-ly' for exe in executables)
-    converted = tuple('tmp-' + i.replace('.ly', '-%s.ly' % v) for i, v in zip(inputs, exeversions))
+    converted = tuple('tmp-%s-%s.ly' % (b, v) for b, v in zip(inputbases, exeversions))
     for i in [0, 1]:
         if targetversions[i] != exeversions[i] and targetversions[i] != 'latest':
             print("Warning: LilyPond %s is not available. File %d %r will be run using version %s instead." %
@@ -76,8 +76,8 @@ def main():
     i = [l.replace('~', os.path.expanduser('~')) for l in opt.lilypondoptions]
 
     cmd = (
-        [executables[0]] + i[0].split() + ['--png', '-o', images[0][:-4], converted[0]],
-        [executables[1]] + i[1].split() + ['--png', '-o', images[1][:-4], converted[1]],
+        [executables[0]] + i[0].split() + ['--png', '-dresolution=%d' % opt.resolution, '-danti-alias-factor=2', '-o', images[0][:-4], converted[0]],
+        [executables[1]] + i[1].split() + ['--png', '-dresolution=%d' % opt.resolution, '-danti-alias-factor=2', '-o', images[1][:-4], converted[1]],
     )
 
     if not opt.quiet:
