@@ -161,17 +161,19 @@ def options():
     parser.add_argument('files', metavar='files', type=str, nargs='+',
         help='files to diff')
     parser.add_argument('-n', '--noconvert', action="store_true",
-        help='Do not run convert-ly to update the input file to the required lilypond version')
-    parser.add_argument('-v', '--version', type=str, default=['fromfile'], nargs='+',
-        help='lilypond version to use (default: fromfile)')
+        help='Do not run convert-ly to update the input file to the required '
+        'lilypond version')
+    parser.add_argument('-v', '--version', type=str, default=[None], nargs='+',
+        help='lilypond version to use (default: fromfile [latest])')
     parser.add_argument('-o', '--output', type=str, default=None,
         help='output file name (default: diff_<file1>-<file2>.png)')
     parser.add_argument('-l', '--lilypondoptions', type=str, nargs='+',
-                        help='additional command line options for lilypond')
+        default=config['lilypondoptions'],
+        help='additional command line options for lilypond')
     parser.add_argument('-t', '--test', action='store_true',
         help='Do not generate files just print the actions')
-    parser.add_argument('-d', '--diff', type=str, default=None,
-                        help="diff the converted inputs using diff (diff or meld)")
+    parser.add_argument('-d', '--diff', type=str, default=config['diff'],
+        help="diff the converted inputs using diff (diff or meld)")
     parser.add_argument('-s', '--showoutput', action='store_true',
         help='show stdout of tools in use')
     parser.add_argument('-q', '--quiet', action='store_true',
