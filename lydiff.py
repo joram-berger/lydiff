@@ -63,37 +63,25 @@ def main():
     if equal(inputs) and equal(targetversions) and equal(opt.convert):
         print("Warning: Equal inputs won't generate differences")
 
-    print("Running this:                  side 1                    side 2:")
-    print("Files:      %25s %25s" % inputs)
-    print("in version: %25s %25s" % inputversions)
-    print("convert:    %25s %25s" % tuple(['no', 'yes'][int(b)] for b in opt.convert))
-    print("target ver: %25s %25s" % targetversions)
-    print("to version: %25s %25s" % exeversions)
-    print("convert-ly: %25s %25s" % convertlys)
-    print("converted:  %25s %25s" % converted)
-    print("executable: %25s %25s" % executables)
-    print("images:     %25s %25s" % images)
-    print("output:     %45s" % opt.output)
+    if not opt.quiet:
+        print("Running this:   ___ 1 _______________     ___ 2 _______________")
+        print("Files:      %25s %25s" % tuple("%s (%s)" % (i, v) for i, v in zip(inputs, inputversions)))
+        #print("convert:    %25s %25s" % tuple(['no', 'yes'][int(b)] for b in opt.convert))
+        print("target version: %21s %25s" % targetversions)
+        print("convert-ly: %25s %25s" % convertlys)
+        print("converted:  %25s %25s" % converted)
+        print("executable: %25s %25s" % executables)
+        print("images:     %25s %25s" % images)
+        print("output:     %45s" % opt.output)
     i = [l.replace('~', os.path.expanduser('~')) for l in opt.lilypondoptions]
 
     cmd = (
         [executables[0]] + i[0].split() + ['--png', '-o', images[0][:-4], converted[0]],
         [executables[1]] + i[1].split() + ['--png', '-o', images[1][:-4], converted[1]],
     )
-    # conversions
 
-
-    # binaries
-
-    # run convert-ly
-
-    #if opt.convert:
-    #    runconvert(inputs, exeversions)
-
-    # run lily
-
-    # compare
-    print("Run tools ... ", end='', flush=True)
+    if not opt.quiet:
+        print("Run tools ... ", end='', flush=True)
     if opt.dryrun or opt.showoutput:
         print()
     if opt.convert[0]:
@@ -104,14 +92,17 @@ def main():
     runlily(cmd[1], opt.dryrun, opt.showoutput)
     if opt.showoutput:
         print('-'*48)
-    compare(images, opt.output, opt.dryrun)
-    print('done')
+    ret = compare(images, opt.output, opt.dryrun)
+    if not opt.quiet:
+        print('done')
+    print('Outputs', ['differ', 'are identical'][int(ret)])
     if opt.diff is not None:
         difftool(opt.diff, converted, opt.dryrun)
-
+    return not ret
 
 def equal(pair):
     return pair[0] == pair[1]
+
 
 def difftool(tool, files, dry):
     if dry:
@@ -121,6 +112,7 @@ def difftool(tool, files, dry):
             print('-'*48)
             print('diff:')
         subprocess.call([*tool.split(), *files])
+
 
 def runconvert(convert, filein, fileout, dry, show):
     cmd = [convert, '-c', filein]
@@ -200,15 +192,23 @@ def options():
     parser.add_argument('-d', '--diff', type=str, default=None,
                         help="diff the converted inputs using diff (diff or meld)")
     parser.add_argument('-s', '--showoutput', action='store_true',
-                        help='show stdout of tools in use')
-    parser.add_argument('-p', '--path', type=str, default='/usr/bin ~/opt/*/bin',
-                        help="Search path for lilypond executables")
+        help='show stdout of tools in use')
+    parser.add_argument('-q', '--quiet', action='store_true',
+        help='Do not show information')
+    parser.add_argument('-p', '--path', type=str, default=config['path'],
+        help="Search path for lilypond executables")
+    parser.add_argument('-r', '--resolution', type=int, default=config['resolution'],
+                        help="Resolution of the output image in dpi")
     # parser.add_argument('-g', '--git', type=str, nargs=2, default=[None, None],
     #                     help="compare file in different git revisions")
     args = parser.parse_args()
-    #print(args)
 
     # prepare options
+    if args.version[0] is None:
+        if len(args.files) == 1:
+            args.version = ["fromfile", "latest"]
+        else:
+            args.version = ["fromfile", "fromfile"]
     if len(args.files) == 1:
         args.files *= 2
     if len(args.version) == 1:
@@ -219,8 +219,8 @@ def options():
     #    args.convert *= 2
     args.convert = [not args.noconvert] * 2
     args.dryrun = args.test
-    return args
 
+    return args
 
 
 def runlily(cmd, dry, show):
