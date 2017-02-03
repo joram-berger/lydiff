@@ -21,6 +21,7 @@ import argparse
 import os
 import glob
 import subprocess
+import yaml
 from distutils.spawn import find_executable
 
 def main():
@@ -169,18 +170,27 @@ def getfileversion(file):
                 break
     return version
 
-def options():
-    """
-       file(s)
-    -o diff_f1_f2.png
-    -l lilyversions
-    -i installpaths
-      lyoptions
-    -h
-    -v "fromfile fromfile"
 
-    ly > convert > run > png (x2)
-    """
+def options():
+    """Read options from config file and commandline"""
+    # default config and config files
+    config = {
+        'lilypondoptions': [''],
+        'path': '/usr/bin ~/opt/*/bin',
+        'diff': None,
+        'resolution': 200,
+    }
+    for configfile in ["~/.lydiff"]:
+        try:
+            with open(os.path.expanduser(configfile)) as f:
+                config.update(yaml.load(f))
+        except FileNotFoundError:
+            pass
+    for k, v in config.items():
+        if k not in ['path', 'diff', 'resolution'] and not isinstance(v, list):
+            config[k] = [v, v]
+
+    # commandline options
     parser = argparse.ArgumentParser(description='Diff LilyPond scores')
     parser.add_argument('files', metavar='files', type=str, nargs='+',
         help='files to diff')
