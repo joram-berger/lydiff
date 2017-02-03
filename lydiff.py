@@ -38,13 +38,15 @@ def main():
     for i, ov in enumerate(opt.version):
         if ov == 'fromfile':
             targetversions[i] = inputversions[i]
+        elif ov == 'latest':
+            targetversions[i] = versions.get(ov)[0]
     targetversions = tuple(targetversions)
     exeversions = tuple(versions.get(v)[0] for v in targetversions)
     executables = tuple(versions.get(v)[1] for v in targetversions)
     convertlys = tuple(exe[:-8] + 'convert-ly' for exe in executables)
     converted = tuple('tmp-' + i.replace('.ly', '-%s.ly' % v) for i, v in zip(inputs, exeversions))
     for i in [0, 1]:
-        if targetversions[i] != exeversions[i]:
+        if targetversions[i] != exeversions[i] and targetversions[i] != 'latest':
             print("Warning: LilyPond %s is not available. File %d %r will be run using version %s instead." %
                   (targetversions[i], i+1, inputs[i], exeversions[i]))
     images = tuple(f.replace('.ly', '.png') for f in converted)
