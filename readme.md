@@ -5,7 +5,7 @@ LilyPond is a music engraving program.
 
 ## Installation
 
-`lydiff` requires a python3 installation including the packages argparse, glob, os and subprocess. Additionally, the programs diff, lilypond (and convert-ly) and ImageMagick needs to be installed. meld is optional.
+`lydiff` requires a python3 installation including the packages argparse, glob, os, subprocess and yaml. Additionally, the programs diff, lilypond (and convert-ly) and ImageMagick needs to be installed. meld is optional.
 The examples an the documentation expect that you create a symlink called `lydiff` to the python file [lydiff.py](lydiff.py) from this repository in a directory in the path of your operating system.
 
 ## Usage
