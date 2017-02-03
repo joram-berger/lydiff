@@ -25,31 +25,22 @@ import yaml
 from distutils.spawn import find_executable
 
 def main():
-    #print("Start")
-    #v = Version("2.22.2")
-    #w = Version((2, 23, 4))
-    #print(v)
-    #print(w)
-    # read options
-    opt = options()
-    # mode
-    ll = opt.path
-    # prepare
-    # files
 
-    #print(opt)
-    assert len(opt.files) == 2
+    opt = options()
+    versions = Versions(opt.path)
+    #print(opt.version)
+    print(opt)
+    # set all pairs of variables
     inputs = tuple(opt.files)
     inputbases = tuple(f.replace('.ly', '') for f in inputs)
     inputversions = tuple(getfileversion(f) for f in inputs)
-
     targetversions = list(opt.version)
     for i, ov in enumerate(opt.version):
         if ov == 'fromfile':
             targetversions[i] = inputversions[i]
     targetversions = tuple(targetversions)
-    exeversions = tuple(['.'.join([str(i) for i in list(findexec(ll, v)[1])]) for v in targetversions])
-    executables = tuple(findexec(ll, v)[0] for v in targetversions)
+    exeversions = tuple(versions.get(v)[0] for v in targetversions)
+    executables = tuple(versions.get(v)[1] for v in targetversions)
     convertlys = tuple(exe[:-8] + 'convert-ly' for exe in executables)
     converted = tuple('tmp-' + i.replace('.ly', '-%s.ly' % v) for i, v in zip(inputs, exeversions))
     for i in [0, 1]:
@@ -239,54 +230,111 @@ def runlily(cmd, dry, show):
     else:
         subprocess.call(cmd, stderr=subprocess.DEVNULL)
 
+
 def compare(images, output, dry):
     cmd = ['convert', *reversed(images),
            '-channel', 'red,green', '-background', 'black',
            '-combine', '-fill', 'white', '-draw', "color 0,0 replace", output]
+    comp = ['compare', '-metric', 'AE', *images, 'null:']
     if dry:
         print('- Run compare: ', ' '.join([repr(s) if ' ' in s else s for s in cmd]))
-    else:
-        subprocess.call(cmd)
+        print('- Run compare: ', ' '.join(comp))
+        return True
 
-def findexec(pattern, version):
-    """Find lilypond binary with minimum version
-
-    Find the lilypond binary which matches the pattern and has at least the
-    required version."""
-    available_binaries = []
-    lst = [int(i) for i in version.split('.')] + ['required version']
-    lst = [tuple(lst)]
-    pattern = ['%s/lilypond' % p for p in pattern.split()]
-    #print(lst)
-    for p in pattern:
-        path = find_executable(p)
-        #print(p, path)
-        if path:
-            available_binaries.append(path)
-        else:
-            available_binaries += glob.glob(os.path.expanduser(p))
-    for binary in available_binaries:
-        #print(binary)
-        version = subprocess.check_output([binary, "--version"])
-        version = [int(i) for i in version.split()[2].decode().split('.')]
-        lst.append((*version, binary))
-    lst.sort()
-    now = False
-    for l in lst:
-        if l[3] == 'required version':
-            now = True
-            continue
-        #print("  %s" % ' *'[bool(now is True)], end='')
-        #print("%2d.%2d.%2d  %s" % l)
-        if now is True:
-            now = l[3]
-            ver = l[:3]
-
-    if now is True:
-        now = lst[-2][3]
-        ver = lst[-2][:3]
-    #print(now, ver)
-    return now, ver
+    subprocess.call(cmd)
+    process = subprocess.Popen(comp, stderr=subprocess.PIPE)
+    _, npixels = process.communicate()
+    #print(_, int(npixels))
+    return int(npixels) == 0
 
 
-main()
+class Versions:
+    def __init__(self, paths, search=True):
+        self.paths = paths
+        self.list = []
+        if ' ' in paths:
+            self.paths = paths.split()
+        if search:
+            self._executables()
+
+    def _executables(self):
+        """search for executables and fill internal list"""
+        pattern = ['%s/lilypond' % p for p in self.paths]
+        available_binaries = []
+
+        for p in pattern:
+            path = find_executable(p)
+            if path:
+                available_binaries.append(path)
+            else:
+                available_binaries += glob.glob(os.path.expanduser(p))
+        for binary in available_binaries:
+            version = subprocess.check_output([binary, "--version"])
+            version = [int(i) for i in version.split()[2].decode().split('.')]
+            self.list.append((*version, binary))
+        self.list.sort()
+
+    def _tuple(self, string):
+        return tuple(int(i) for i in string.split("."))
+
+    def _str(self, tup):
+        return '.'.join([str(i) for i in tup])
+
+    def __str__(self):
+        string = ""
+        for version in self.list:
+            string += "  %2d.%2d.%2d  %s\n" % version
+        return string[:-1]
+
+    @property
+    def binaries(self):
+        return [v[3] for v in self.list]
+
+    @property
+    def versions(self):
+        #print(self.list[0][:3])
+        return [self._str(v[:3]) for v in self.list]
+
+    def get(self, version, similarfirst=True):
+        """algo in 'next', 'previous', 'sameminor' """
+        #print(version, self.list)
+        if version in self.versions:
+            return version, self.binaries[self.versions.index(version)]
+        if version == 'latest':
+            return self.versions[-1], self.binaries[-1]
+        # version not found, looking for best match according to algo
+        v = self._tuple(version)
+        if v < self.list[0][:3]:
+            print("Warning: required version %s is older than any installed version" % version)
+            return self.versions[0], self.binaries[0]
+        if v > self.list[-1][:3]:
+            print("Warning: required version %s is newer than any installed version" % version)
+            return self.versions[-1], self.binaries[-1]
+        if similarfirst:  # TODO: not implemented
+            shortlist = [entry for entry in self.list if entry[:2] == v[:2]]
+            for i, available in enumerate(shortlist):
+                if available[:3] > v:
+                    break
+            print("Warning: required version %s is not installed. Using %s instead." % (
+                  version, self.versions[i]))
+            return self.versions[i], self.binaries[i]
+
+        for i, available in enumerate(self.list):
+            if available[:3] > v:
+                break
+        print("Warning: required version %s is not installed. Using %s instead." % (
+              version, self.versions[i]))
+        return self.versions[i], self.binaries[i]
+
+
+if __name__ == "__main__":
+    exit(main())
+    vv = Versions("/usr/bin ~/Technik/sw/ly/*/bin")
+    #print(vv)
+    #print(vv.get("2.18.0"))
+    #print(vv.get("2.18.5"))
+    #print(vv.get("2.19.53"))
+    #print(vv.get("2.20.0"))
+    #comp = ['compare', '-metric', 'AE', 'tmp-test3-2.18.2.png', 'tmp-test3-2.19.53.png', 'null:']
+    #subprocess.call(comp)
+    #import subprocess
