@@ -68,3 +68,11 @@ Check metrics:
 ### Raise DPI and make new option
 
 **Status**: open
+
+### Add option to unify the tagline
+
+In order to avoid that files differ just because of the version
+appearing in the tagline the lower part of the page could be
+cut off.
+
+**Status**: open
