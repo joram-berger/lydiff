@@ -127,25 +127,6 @@ def runconvert(convert, filein, fileout, dry, show):
                 subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
 
 
-class Version(tuple):
-    def __init__(self, init):
-        print("I", init)
-        if isinstance(init, str):
-            print( init, init.split('.'))
-            t = tuple(int(i) for i in init.split('.'))
-            print(t)
-            self = t
-        elif isinstance(init, tuple):
-            self = init
-        else:
-            print("ERROR:", init)
-        print("S", self, len(self))
-    def __str__(self):
-        print("P", len(self), type(self), type(self[1]))
-        return '.'.join([str(i) for i in list(self)])
-    def __repr__(self):
-        return str(self)
-
 def getfileversion(file):
     version = None
     with open(file) as f:
