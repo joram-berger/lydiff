@@ -10,12 +10,14 @@ Open issues for the `lydiff` tool. In this early state of the development, it is
 **Status**: open
 
 ### Allow options for `diff`
-**Status**: open
+This is possible in quotes: `-d "diff -u"`.
+
+**Status**: closed
 
 ### Allow `colordiff`
 
 ### Add configuration file
-**Status**: open
+**Status**: closed
 
 ### Work around lilypond-book-preamble
 Varying output sizes break the convert (diff) step.
@@ -35,7 +37,7 @@ Anti-aliasing effects etc. are problematic. A vector-graphic diff would be clean
 
 ### Make comparison between fromversion and latest default for single file
 
-**Status**: open
+**Status**: closed
 
 ### Include `compare` from ImageMagick
 The metric option can check whether there are any changes at all. Colouring common pixels grey makes differences more visible.
@@ -44,11 +46,11 @@ Check metrics:
 
 ```for met in AE FUZZ MAE MEPP MSE NCC PHASH PSNR RMSE; do echo; echo $met $(compare tmp-test2-2.18.2.png tmp-test3-2.18.2.png -metric $met  output.png); echo $(compare tmp-test2-2.18.2.png tmp-test4-2.18.2.png -metric $met  output.png); done```
 
-**Status**: open
+**Status**: in progress
 
 ### Improve error handling
 
-**Status**: open
+**Status**: in progress
 
 ### Move temporary files to /tmp
 
@@ -59,7 +61,7 @@ Check metrics:
 
 ### Implement »latest« and »stable«
 
-**Status**: open
+**Status**: in progress
 
 ### Check: Version must not be older than file
 
@@ -67,7 +69,7 @@ Check metrics:
 
 ### Raise DPI and make new option
 
-**Status**: open
+**Status**: closed
 
 ### Add option to unify the tagline
 
