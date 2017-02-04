@@ -31,7 +31,7 @@ lydiff file1.ly file2.ly -v fromfile fromfile
 ## Comparing different lilypond versions
 
 To use this functionality, several version of lilypond need to be installed
-on the systm.
+on the system.
 
 ```
 lydiff file.ly
@@ -54,9 +54,10 @@ lydiff file.ly -v 2.18.2 2.19.54
 
 ## More options
 
-Some options steer the program flow:
+Some options steer the program flow. Each option has a long name and a short name. The long option names are explained in this list. The short variants are used for the examples.
 
 * `--resolution`: Resolution of the lilypond output in dpi.
+  Example: `-r 300`.
 * `--test`: Do not run the tools just print the commands that would be run.
 * `--quiet`: Do not show versions, files and executables in use.
 * `--showoutput`: Show the standard output of the tools in use.
@@ -71,6 +72,9 @@ Some options steer the program flow:
 
 Options per file:
 
-* `--version`: lilypond version to be used to compile each file.
+* `--version`: lilypond version to be used to compile each file. A version is usually written like `2.18.2`. There are two pseudo-versions:
+  `fromfile` is the version mentioned in the version statement of the input file (e.g. `\version "2.18.2"`),
+  `latest` is the most recent version found in the search path (cf. `--path`).
 * `--lilypondoptions`: A string of options passed to the lilypond command.
   Quotes are required if the options contain a space.
+  Examle: `-l "-I path/to/openlilylib".
