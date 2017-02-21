@@ -32,14 +32,14 @@ def main():
         print(e)
         exit(1)
     versions = Versions(opt.path)
-    #print(opt.version)
+    #print(opt.versions)
     print(opt)
     # set all pairs of variables
     inputs = tuple(opt.files)
     inputbases = tuple(os.path.splitext(f)[0] for f in inputs)
     inputversions = tuple(getfileversion(f) for f in inputs)
-    targetversions = list(opt.version)
-    for i, ov in enumerate(opt.version):
+    targetversions = list(opt.versions)
+    for i, ov in enumerate(opt.versions):
         if ov == 'fromfile':
             targetversions[i] = inputversions[i]
         elif ov == 'latest':
@@ -155,6 +155,20 @@ def options():
                 raise Exception("File not found: {}".format(f))
         return files
 
+    def validate_versions(versions, files):
+        """Check for validity of version argument(s)"""
+        if len(versions) > 2:
+            raise Exception("Please specify one or two LilyPond versions")
+        if len(versions) == 1:
+            versions *= 2
+        if versions[0] is None:
+            # no versions are given, take from file(s)
+            if files[0] == files[1]:
+                # only one file, default: compare original to latest version
+                versions = ["fromfile", "latest"]
+            else:
+                versions = ["fromfile", "fromfile"]
+        return versions
     
     # default config and config files
     config = {
@@ -184,8 +198,8 @@ def options():
     parser.add_argument('-n', '--noconvert', action="store_true",
         help='Do not run convert-ly to update the input file to the required '
         'lilypond version')
-    parser.add_argument('-v', '--version', type=str, default=[None], nargs='+',
-        help='lilypond version to use (default: fromfile [latest])')
+    parser.add_argument('-v', '--versions', type=str, default=[None], nargs='+',
+        help='lilypond version(s) to use (default: fromfile [latest])')
     parser.add_argument('-o', '--output', type=str, default=None,
         help='output file name (default: diff_<file1>-<file2>.png)')
     parser.add_argument('-l', '--lilypondoptions', type=str, nargs='+',
@@ -209,16 +223,7 @@ def options():
 
     # validate options
     args.files = validate_files(args.files)
-    
-    if len(args.version) > 2:
-        raise Exception("Please specify one or two LilyPond versions")
-    if len(args.version) == 1:
-        args.version *= 2
-    if args.version[0] is None:
-        if len(args.files) == 1:
-            args.version = ["fromfile", "latest"]
-        else:
-            args.version = ["fromfile", "fromfile"]
+    args.versions = validate_versions(args.versions, args.files)
 
     if len(args.lilypondoptions) == 1:
         args.lilypondoptions *= 2
