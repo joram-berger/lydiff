@@ -31,7 +31,7 @@ def main():
     print(opt)
     # set all pairs of variables
     inputs = tuple(opt.files)
-    inputbases = tuple(f.replace('.ly', '') for f in inputs)
+    inputbases = tuple(os.path.splitext(f)[0] for f in inputs)
     inputversions = tuple(getfileversion(f) for f in inputs)
     targetversions = list(opt.version)
     for i, ov in enumerate(opt.version):
