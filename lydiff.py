@@ -25,7 +25,12 @@ from distutils.spawn import find_executable
 
 def main():
 
-    opt = options()
+    try:
+        opt = options()
+    except Exception as e:
+        print()
+        print(e)
+        exit(1)
     versions = Versions(opt.path)
     #print(opt.version)
     print(opt)
@@ -190,15 +195,21 @@ def options():
     args = parser.parse_args()
 
     # prepare options
+    if len(args.version) > 2:
+        raise Exception("Please specify one or two LilyPond versions")
+    if len(args.version) == 1:
+        args.version *= 2
     if args.version[0] is None:
         if len(args.files) == 1:
             args.version = ["fromfile", "latest"]
         else:
             args.version = ["fromfile", "fromfile"]
+
     if len(args.files) == 1:
         args.files *= 2
-    if len(args.version) == 1:
-        args.version *= 2
+    elif len(args.files) > 2:
+        raise Exception("Please specify one or two input files")
+
     if len(args.lilypondoptions) == 1:
         args.lilypondoptions *= 2
     #if len(args.convert) == 1:
