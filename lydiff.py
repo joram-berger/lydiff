@@ -240,8 +240,10 @@ class Versions:
     def __init__(self, paths, search=True):
         self.paths = paths
         self.list = []
-        if ' ' in paths:
-            self.paths = paths.split()
+        if ':' in paths:
+            self.paths = paths.split(':')
+        else:
+            self.paths = [paths]
         if search:
             self._executables()
 
