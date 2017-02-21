@@ -143,6 +143,19 @@ def getfileversion(file):
 
 def options():
     """Read options from config file and commandline"""
+
+    def validate_files(files):
+        """Check for validity of file argument(s)"""
+        if len(files) == 1:
+            files *= 2
+        elif len(files) > 2:
+            raise Exception("Please specify one or two input files")
+        for f in files:
+            if not os.path.exists(f):
+                raise Exception("File not found: {}".format(f))
+        return files
+
+    
     # default config and config files
     config = {
         'lilypondoptions': [''],
@@ -194,7 +207,9 @@ def options():
     #                     help="compare file in different git revisions")
     args = parser.parse_args()
 
-    # prepare options
+    # validate options
+    args.files = validate_files(args.files)
+    
     if len(args.version) > 2:
         raise Exception("Please specify one or two LilyPond versions")
     if len(args.version) == 1:
@@ -204,11 +219,6 @@ def options():
             args.version = ["fromfile", "latest"]
         else:
             args.version = ["fromfile", "fromfile"]
-
-    if len(args.files) == 1:
-        args.files *= 2
-    elif len(args.files) > 2:
-        raise Exception("Please specify one or two input files")
 
     if len(args.lilypondoptions) == 1:
         args.lilypondoptions *= 2
