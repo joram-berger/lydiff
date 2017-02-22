@@ -183,7 +183,7 @@ def options():
     # default config and config files
     config = {
         'lilypondoptions': [''],
-        'path': '/usr/bin ~/opt/*/bin',
+        'path': '/usr/bin:~/opt/*/bin',
         'diff': None,
         'resolution': 200,
     }
