@@ -183,7 +183,9 @@ def options():
     # default config and config files
     config = {
         'lilypondoptions': [''],
-        'path': '/usr/bin:~/opt/*/bin:~/lilypond/usr/bin',
+        'path': os.pathsep.join(['/usr/bin',
+                                 '~/opt/*/bin',
+                                 '~/lilypond/usr/bin']),
         'diff': None,
         'resolution': 200,
     }

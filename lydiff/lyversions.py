@@ -8,8 +8,8 @@ import subprocess
 class Versions:
     def __init__(self, paths, search=True):
         self._list = []
-        if ':' in paths:
-            self._paths = paths.split(':')
+        if os.pathsep in paths:
+            self._paths = paths.split(os.pathsep)
         else:
             self._paths = [paths]
         if search:
