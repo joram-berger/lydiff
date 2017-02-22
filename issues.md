@@ -44,7 +44,11 @@ The metric option can check whether there are any changes at all. Colouring comm
 
 Check metrics:
 
-```for met in AE FUZZ MAE MEPP MSE NCC PHASH PSNR RMSE; do echo; echo $met $(compare tmp-test2-2.18.2.png tmp-test3-2.18.2.png -metric $met  output.png); echo $(compare tmp-test2-2.18.2.png tmp-test4-2.18.2.png -metric $met  output.png); done```
+```
+for met in AE FUZZ MAE MEPP MSE NCC PHASH PSNR RMSE; do echo; echo $met $(compare tmp-test2-2.18.2.png
+tmp-test3-2.18.2.png -metric $met  output.png); echo $(compare tmp-test2-2.18.2.png tmp-test4-2.18.2.png
+-metric $met  output.png); done
+```
 
 **Status**: in progress
 
