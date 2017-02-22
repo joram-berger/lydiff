@@ -21,94 +21,71 @@ import argparse
 import os
 import subprocess
 
+import lydiff
 from lydiff.lyversions import Versions
 
 def main():
 
     try:
-        opt = options()
-        available_versions = Versions(opt.path)
+        cli_opts = cli_options()
+        available_versions = Versions(cli_opts.path)
     except Exception as e:
         print()
         print(e)
         exit(1)
 
-#    print(available_versions.versions)
-#    print(versions)
-    #print(opt.versions)
-    print(opt)
-    # set all pairs of variables
-    inputs = tuple(opt.files)
-    inputbases = tuple(os.path.splitext(f)[0] for f in inputs)
-    inputversions = tuple(getfileversion(f) for f in inputs)
-    targetversions = list(opt.versions)
-    for i, ov in enumerate(opt.versions):
-        if ov == 'fromfile':
-            targetversions[i] = inputversions[i]
-        elif ov == 'latest':
-            targetversions[i] = available_versions.get(ov)[0]
-    targetversions = tuple(targetversions)
-    exeversions = tuple(available_versions.get(v)[0] for v in targetversions)
-    executables = tuple(available_versions.get(v)[1] for v in targetversions)
-    convertlys = tuple(exe[:-8] + 'convert-ly' for exe in executables)
-    converted = tuple('tmp-%s-%s.ly' % (b, v) for b, v in zip(inputbases, exeversions))
+    cli_opts.available_versions = available_versions
+    opt = lydiff.configure(cli_opts)
+
+    # make options available as local variables
+    input_files = opt['input_files']
+    input_versions = opt['input_versions']
+    target_versions = opt['target_versions']
+    lily_versions = opt['lily_versions']
+    executables = opt['executables']
+    convert_lys = opt['convert_lys']
+    tmp_files = opt['tmp_files']
+    image_files = opt['image_files']
+    diff_file = opt['diff_file']
+    diff_tool = opt['diff_tool']
+    quiet = opt['quiet']
+    dryrun = opt['dryrun']
+    convert = opt['convert']
+    show_output = opt['show_output']
+    commands = opt['commands']
+
+    # plausibility checks    
+    if lydiff.equal(input_files) and lydiff.equal(target_versions) and lydiff.equal(opt.convert):
+        print("Warning: Equal input_files won't generate differences")
+
     for i in [0, 1]:
-        if targetversions[i] != exeversions[i] and targetversions[i] != 'latest':
+        if target_versions[i] != lily_versions[i] and target_versions[i] != 'latest':
             print("Warning: LilyPond %s is not available. File %d %r will be run using version %s instead." %
-                  (targetversions[i], i+1, inputs[i], exeversions[i]))
-    images = tuple(f.replace('.ly', '.png') for f in converted)
-    npages = []
-    if opt.output is None:
-        if equal(inputs):
-            opt.output = 'diff_%s_%s-%s.png' % (inputbases[0], *exeversions)
-        elif equal(targetversions):
-            opt.output = 'diff_%s-%s_%s.png' % (*inputbases, exeversions[0])
-        else:
-            opt.output = 'diff_%s-%s_%s-%s.png' % (*inputbases, *exeversions)
+                  (target_versions[i], i+1, input_files[i], lily_versions[i]))
+    
+    if not quiet:
+        print_report(opt)
 
-    # check
-    if equal(inputs) and equal(targetversions) and equal(opt.convert):
-        print("Warning: Equal inputs won't generate differences")
-
-    if not opt.quiet:
-        print("Running this:   ___ 1 _______________     ___ 2 _______________")
-        print("Files:      %25s %25s" % tuple("%s (%s)" % (i, v) for i, v in zip(inputs, inputversions)))
-        #print("convert:    %25s %25s" % tuple(['no', 'yes'][int(b)] for b in opt.convert))
-        print("target version: %21s %25s" % targetversions)
-        print("convert-ly: %25s %25s" % convertlys)
-        print("converted:  %25s %25s" % converted)
-        print("executable: %25s %25s" % executables)
-        print("images:     %25s %25s" % images)
-        print("output:     %45s" % opt.output)
-    i = [l.replace('~', os.path.expanduser('~')) for l in opt.lilypondoptions]
-
-    cmd = (
-        [executables[0]] + i[0].split() + ['--png', '-dresolution=%d' % opt.resolution, '-danti-alias-factor=2', '-o', images[0][:-4], converted[0]],
-        [executables[1]] + i[1].split() + ['--png', '-dresolution=%d' % opt.resolution, '-danti-alias-factor=2', '-o', images[1][:-4], converted[1]],
-    )
-
-    if not opt.quiet:
-        print("Run tools ... ", end='', flush=True)
-    if opt.dryrun or opt.showoutput:
+    # compile the scores
+    if dryrun or show_output:
         print()
-    if opt.convert[0]:
-        runconvert(convertlys[0], inputs[0], converted[0], opt.dryrun, opt.showoutput)
-    if opt.convert[1]:
-        runconvert(convertlys[1], inputs[1], converted[1], opt.dryrun, opt.showoutput)
-    runlily(cmd[0], opt.dryrun, opt.showoutput)
-    runlily(cmd[1], opt.dryrun, opt.showoutput)
-    if opt.showoutput:
+    if convert[0]:
+        runconvert(convert_lys[0], input_files[0], tmp_files[0], dryrun, show_output)
+    if convert[1]:
+        runconvert(convert_lys[1], input_files[1], tmp_files[1], dryrun, show_output)
+    runlily(commands[0], dryrun, show_output)
+    runlily(commands[1], dryrun, show_output)
+
+    # perform comparison
+    if show_output:
         print('-'*48)
-    ret = compare(images, opt.output, opt.dryrun)
-    if not opt.quiet:
+    ret = compare(image_files, diff_file, dryrun)
+    if not quiet:
         print('done')
     print('Outputs', ['differ', 'are identical'][int(ret)])
-    if opt.diff is not None:
-        difftool(opt.diff, converted, opt.dryrun)
+    if diff_tool is not None:
+        difftool(diff_tool, tmp_files, dryrun)
     return not ret
-
-def equal(pair):
-    return pair[0] == pair[1]
 
 
 def difftool(tool, files, dry):
@@ -134,17 +111,8 @@ def runconvert(convert, filein, fileout, dry, show):
                 subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
 
 
-def getfileversion(file):
-    version = None
-    with open(file) as f:
-        for line in f:
-            if r'\version' in line:
-                _, version, _ = line.split('"', 2)
-                break
-    return version
 
-
-def options():
+def cli_options():
     """Read options from config file and commandline"""
 
     def validate_files(files):
@@ -240,10 +208,9 @@ def options():
     args.files = validate_files(args.files)
     args.versions = validate_versions(args.versions, args.files)
     args.lilypondoptions = validate_lilypond_options(args.lilypondoptions)
-
-    #if len(args.convert) == 1:
-    #    args.convert *= 2
+    # TODO: Discuss whether a way to use "convert" 
     args.convert = [not args.noconvert] * 2
+
     # why do you name the option "test" when you *use* it only as "dryrun"?
     # if this is only for the option letter I strongly suggest to reconsider
     # the issue. Suggestion:
@@ -279,7 +246,17 @@ def compare(images, output, dry):
     #print(_, int(npixels))
     return int(npixels) == 0
 
-
+def print_report(opt):
+    print("Running this:   ___ 1 _______________     ___ 2 _______________")
+    print("Files:      %25s %25s" % tuple("%s (%s)" % (i, v) for i, v in zip(opt['input_files'], opt['input_versions'])))
+    #print("convert:    %25s %25s" % tuple(['no', 'yes'][int(b)] for b in opt.convert))
+    print("target version: %21s %25s" % opt['target_versions'])
+    print("convert-ly: %25s %25s" % opt['convert_lys'])
+    print("tmp_files:  %25s %25s" % opt['tmp_files'])
+    print("executable: %25s %25s" % opt['executables'])
+    print("images:     %25s %25s" % opt['image_files'])
+    print("output:     %45s" % opt['diff_file'])
+    print("Run tools ... ", end='', flush=True)
 
 if __name__ == "__main__":
     exit(main())
