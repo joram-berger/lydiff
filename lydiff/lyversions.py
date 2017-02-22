@@ -60,6 +60,8 @@ class Versions:
             version = [int(i) for i in version.split()[2].decode().split('.')]
             result.append((*version, binary))
 
+        if len(result) == 0:
+            raise Exception("No LilyPond installations found in the given paths:\n{}".format(self._paths))
         result.sort()
         return result
 

@@ -27,11 +27,13 @@ def main():
 
     try:
         opt = options()
+        versions = Versions(opt.path)
     except Exception as e:
         print()
         print(e)
         exit(1)
-    versions = Versions(opt.path)
+
+#    print(versions)
     #print(opt.versions)
     print(opt)
     # set all pairs of variables
