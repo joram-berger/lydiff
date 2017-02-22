@@ -6,15 +6,13 @@ import glob
 import subprocess
 
 class Versions:
+    """Class managing installed LilyPond versions.
+       Upon initialization all installed executables within the given set of
+       paths is determined and tested for their LilyPond version."""
+
     def __init__(self, paths, search=True):
-        if os.pathsep in paths:
-            self._paths = paths.split(os.pathsep)
-        else:
-            self._paths = [paths]
-        if search:
-            self._list = self._executables()
-        else:
-            self._list = []
+        self._paths =  paths.split(os.pathsep) if os.pathsep in paths else [paths]
+        self._list = self._executables() if search else []
 
     def _executables(self):
         """search for executables and fill internal list"""
