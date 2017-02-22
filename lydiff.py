@@ -69,12 +69,10 @@ def main():
     # compile the scores
     if dryrun or show_output:
         print()
-    if convert[0]:
-        runconvert(convert_lys[0], input_files[0], tmp_files[0], dryrun, show_output)
-    if convert[1]:
-        runconvert(convert_lys[1], input_files[1], tmp_files[1], dryrun, show_output)
-    runlily(commands[0], dryrun, show_output)
-    runlily(commands[1], dryrun, show_output)
+    for i in [0, 1]:
+        if convert[i]:
+            runconvert(convert_lys[i], input_files[i], tmp_files[i], dryrun, show_output)
+        runlily(commands[i], dryrun, show_output)
 
     # perform comparison
     if show_output:
