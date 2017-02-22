@@ -21,7 +21,6 @@ import argparse
 import os
 import glob
 import subprocess
-import yaml
 from distutils.spawn import find_executable
 
 def main():
@@ -148,10 +147,14 @@ def options():
     }
     for configfile in ["~/.lydiff"]:
         try:
+            import yaml
             with open(os.path.expanduser(configfile)) as f:
                 config.update(yaml.load(f))
         except FileNotFoundError:
             pass
+        except ImportError:
+            raise Exception("Module pyyaml dependency is not satisfied. " +
+                "Please install using 'pip' or your operating system's package manager")
     for k, v in config.items():
         if k not in ['path', 'diff', 'resolution'] and not isinstance(v, list):
             config[k] = [v, v]

@@ -4,8 +4,11 @@ What is lydiff? TBD
 
 ## Requirements
 
-For Ubuntu, all requirements are installed via
-`sudo apt install python3 python3-yaml imagemagick lilypond meld`.
+For Ubuntu and other Debian based Linux distributions, all requirements can be
+installed via `sudo apt install python3 python3-yaml imagemagick lilypond meld`.
+
+`python3-yaml` is an optional dependency that is only required when using a
+configuration file.
 
 ## Installation
 
