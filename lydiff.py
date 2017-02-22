@@ -239,6 +239,10 @@ def options():
     #if len(args.convert) == 1:
     #    args.convert *= 2
     args.convert = [not args.noconvert] * 2
+    # why do you name the option "test" when you *use* it only as "dryrun"?
+    # if this is only for the option letter I strongly suggest to reconsider
+    # the issue. Suggestion:
+    # - don't offer the '-d' short option for either --diff or --dryrun
     args.dryrun = args.test
 
     return args
