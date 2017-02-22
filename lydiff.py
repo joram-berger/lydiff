@@ -71,42 +71,19 @@ def main():
         print()
     for i in [0, 1]:
         if convert[i]:
-            runconvert(convert_lys[i], input_files[i], tmp_files[i], dryrun, show_output)
-        runlily(commands[i], dryrun, show_output)
+            lydiff.runconvert(convert_lys[i], input_files[i], tmp_files[i], dryrun, show_output)
+        lydiff.runlily(commands[i], dryrun, show_output)
 
     # perform comparison
     if show_output:
         print('-'*48)
-    ret = compare(image_files, diff_file, dryrun)
+    ret = lydiff.compare(image_files, diff_file, dryrun)
     if not quiet:
         print('done')
     print('Outputs', ['differ', 'are identical'][int(ret)])
     if diff_tool is not None:
-        difftool(diff_tool, tmp_files, dryrun)
+        lydiff.difftool(diff_tool, tmp_files, dryrun)
     return not ret
-
-
-def difftool(tool, files, dry):
-    if dry:
-        print('- Run diff:    ', tool, *files)
-    else:
-        if tool.startswith('diff'):
-            print('-'*48)
-            print('diff:')
-        subprocess.call([*tool.split(), *files])
-
-
-def runconvert(convert, filein, fileout, dry, show):
-    cmd = [convert, '-c', filein]
-    if dry:
-        print("- Run convert: ", ' '.join(cmd), '>', fileout)
-    else:
-        with open(fileout, 'w') as f:
-            if show:
-                print('-'*48)
-                subprocess.call(cmd, stdout=f)
-            else:
-                subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
 
 
 
@@ -217,32 +194,6 @@ def cli_options():
 
     return args
 
-
-def runlily(cmd, dry, show):
-    if dry:
-        print('- Run LilyPond:', ' '.join(cmd))
-    elif show:
-        print('-'*48)
-        subprocess.call(cmd)
-    else:
-        subprocess.call(cmd, stderr=subprocess.DEVNULL)
-
-
-def compare(images, output, dry):
-    cmd = ['convert', *reversed(images),
-           '-channel', 'red,green', '-background', 'black',
-           '-combine', '-fill', 'white', '-draw', "color 0,0 replace", output]
-    comp = ['compare', '-metric', 'AE', *images, 'null:']
-    if dry:
-        print('- Run compare: ', ' '.join([repr(s) if ' ' in s else s for s in cmd]))
-        print('- Run compare: ', ' '.join(comp))
-        return True
-
-    subprocess.call(cmd)
-    process = subprocess.Popen(comp, stderr=subprocess.PIPE)
-    _, npixels = process.communicate()
-    #print(_, int(npixels))
-    return int(npixels) == 0
 
 def print_report(opt):
     print("Running this:   ___ 1 _______________     ___ 2 _______________")

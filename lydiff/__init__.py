@@ -85,3 +85,52 @@ def getfileversion(file):
 def equal(pair):
     return pair[0] == pair[1]
 
+def difftool(tool, files, dry):
+    if dry:
+        print('- Run diff:    ', tool, *files)
+    else:
+        if tool.startswith('diff'):
+            print('-'*48)
+            print('diff:')
+        subprocess.call([*tool.split(), *files])
+
+
+def runconvert(convert, filein, fileout, dry, show):
+    cmd = [convert, '-c', filein]
+    if dry:
+        print("- Run convert: ", ' '.join(cmd), '>', fileout)
+    else:
+        with open(fileout, 'w') as f:
+            if show:
+                print('-'*48)
+                subprocess.call(cmd, stdout=f)
+            else:
+                subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
+
+def runlily(cmd, dry, show):
+    if dry:
+        print('- Run LilyPond:', ' '.join(cmd))
+    elif show:
+        print('-'*48)
+        subprocess.call(cmd)
+    else:
+        subprocess.call(cmd, stderr=subprocess.DEVNULL)
+
+
+def compare(images, output, dry):
+    cmd = ['convert', *reversed(images),
+           '-channel', 'red,green', '-background', 'black',
+           '-combine', '-fill', 'white', '-draw', "color 0,0 replace", output]
+    comp = ['compare', '-metric', 'AE', *images, 'null:']
+    if dry:
+        print('- Run compare: ', ' '.join([repr(s) if ' ' in s else s for s in cmd]))
+        print('- Run compare: ', ' '.join(comp))
+        return True
+
+    subprocess.call(cmd)
+    process = subprocess.Popen(comp, stderr=subprocess.PIPE)
+    _, npixels = process.communicate()
+    #print(_, int(npixels))
+    return int(npixels) == 0
+
+
