@@ -7,30 +7,61 @@ import subprocess
 
 class Versions:
     def __init__(self, paths, search=True):
-        self._list = []
         if os.pathsep in paths:
             self._paths = paths.split(os.pathsep)
         else:
             self._paths = [paths]
         if search:
-            self._executables()
+            self._list = self._executables()
+        else:
+            self._list = []
 
     def _executables(self):
         """search for executables and fill internal list"""
-        pattern = ['%s/lilypond' % p for p in self._paths]
-        available_binaries = []
 
-        for p in pattern:
-            path = find_executable(p)
-            if path:
-                available_binaries.append(path)
-            else:
-                available_binaries += glob.glob(os.path.expanduser(p))
+        def release_binary(base):
+            """Generate a LilyPond executable name in a binary release directory"""
+            return os.path.join(base, 'usr', 'bin', 'lilypond')
+
+        def build_binary(base):
+            """Generate a LilyPond executable name in a custom build directory"""
+            return os.path.join(base, 'out', 'bin', 'lilypond')
+
+        def package_binary(base):
+            """Generate a LilyPond executable name directly in the path"""
+            return os.path.join(base, 'lilypond')
+            
+        result = []
+        available_binaries = []
+        for p in self._paths:
+            # walk over all given paths and their immediate subdirectories,
+            # testing each for 'lilypond' executables, both in the place for
+            # binary releases and for local builds.
+            
+            p = os.path.expanduser(p)
+            if not os.path.exists(p) and (not os.path.isdir(p)):
+                print("Warning: Path {} doesn't point to a directory. Skipping.".format(p))
+                continue
+
+            # Create list with path and all its subdirectories (assuming path is
+            # either the LilyPond directory itself or a parent directory
+            # with multiple installations)
+            dirs = [p] + [os.path.join(p, d) for d in os.listdir(p) if os.path.isdir(os.path.join(p, d))]
+
+            for d in dirs:
+                binaries = [b for b in [release_binary(d), build_binary(d), package_binary(d)] if os.access(b, os.X_OK)]
+                available_binaries.extend(binaries)
+
+        # Retrieve version for each LilyPond binary
+        # TODO: Should this be error-checked
+        # ('lilypond' might not be a LilyPond executable)?
         for binary in available_binaries:
             version = subprocess.check_output([binary, "--version"])
             version = [int(i) for i in version.split()[2].decode().split('.')]
-            self._list.append((*version, binary))
-        self._list.sort()
+            result.append((*version, binary))
+
+        result.sort()
+        return result
 
     def _tuple(self, string):
         return tuple(int(i) for i in string.split("."))

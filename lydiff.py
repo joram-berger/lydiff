@@ -185,7 +185,7 @@ def options():
         'lilypondoptions': [''],
         'path': os.pathsep.join(['/usr/bin',
                                  '~/opt/*/bin',
-                                 '~/lilypond/usr/bin']),
+                                 '~/lilypond']),
         'diff': None,
         'resolution': 200,
     }
