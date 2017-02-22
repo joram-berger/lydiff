@@ -169,7 +169,17 @@ def options():
             else:
                 versions = ["fromfile", "fromfile"]
         return versions
-    
+
+    def validate_lilypond_options(options):
+        """Check for validity of LilyPond option(s) argument(s)"""
+        # TODO: This is incomplete, some checks for the -dsomething options
+        # have to be implemented.
+        if len(options) == 1:
+             options *= 2
+        elif len(options) > 2:
+            raise Exception("Please specify onr or two sets of LilyPond options")
+        return options
+
     # default config and config files
     config = {
         'lilypondoptions': [''],
@@ -224,9 +234,8 @@ def options():
     # validate options
     args.files = validate_files(args.files)
     args.versions = validate_versions(args.versions, args.files)
+    args.lilypondoptions = validate_lilypond_options(args.lilypondoptions)
 
-    if len(args.lilypondoptions) == 1:
-        args.lilypondoptions *= 2
     #if len(args.convert) == 1:
     #    args.convert *= 2
     args.convert = [not args.noconvert] * 2
