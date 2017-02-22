@@ -19,6 +19,11 @@ This is possible in quotes: `-d "diff -u"`.
 ### Add configuration file
 **Status**: closed
 
+### Fix lilypondoptions option
+
+Specifying something like `-dpaper-size` fails because `argparse` thinks `-d` is the next option and complains
+about a missing argument to `-l`.
+
 ### Work around lilypond-book-preamble
 Varying output sizes break the convert (diff) step.
 Inclusion of the lilypond-book-preamble should be commented.
