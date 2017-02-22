@@ -22,12 +22,12 @@ import subprocess
 
 import lydiff
 from lydiff.lyversions import Versions
-from lydiff.cliopts import cli_options
+from lydiff import cliopts
 
 def main():
 
     try:
-        cli_opts = cli_options()
+        cli_opts = lydiff.cliopts.cli_options()
         available_versions = Versions(cli_opts.path)
     except Exception as e:
         print()
@@ -37,52 +37,35 @@ def main():
     cli_opts.available_versions = available_versions
     opt = lydiff.configure(cli_opts)
 
-    # make options available as local variables
-    input_files = opt['input_files']
-    input_versions = opt['input_versions']
-    target_versions = opt['target_versions']
-    lily_versions = opt['lily_versions']
-    executables = opt['executables']
-    convert_lys = opt['convert_lys']
-    tmp_files = opt['tmp_files']
-    image_files = opt['image_files']
-    diff_file = opt['diff_file']
-    diff_tool = opt['diff_tool']
     quiet = opt['quiet']
     dryrun = opt['dryrun']
     convert = opt['convert']
     show_output = opt['show_output']
-    commands = opt['commands']
 
-    # plausibility checks    
-    if lydiff.equal(input_files) and lydiff.equal(target_versions) and lydiff.equal(opt.convert):
-        print("Warning: Equal input_files won't generate differences")
-
-    for i in [0, 1]:
-        if target_versions[i] != lily_versions[i] and target_versions[i] != 'latest':
-            print("Warning: LilyPond %s is not available. File %d %r will be run using version %s instead." %
-                  (target_versions[i], i+1, input_files[i], lily_versions[i]))
+    if lydiff.check_empty_comparison(opt):
+        exit()
+    lydiff.check_available_versions(opt)
     
     if not quiet:
         print_report(opt)
-
-    # compile the scores
     if dryrun or show_output:
         print()
-    for i in [0, 1]:
-        if convert[i]:
-            lydiff.runconvert(convert_lys[i], input_files[i], tmp_files[i], dryrun, show_output)
-        lydiff.runlily(commands[i], dryrun, show_output)
+        
+    lydiff.runconvert(opt)
+    lydiff.runlily(opt)
 
-    # perform comparison
     if show_output:
         print('-'*48)
-    ret = lydiff.compare(image_files, diff_file, dryrun)
+
+    ret = lydiff.compare(opt)
     if not quiet:
         print('done')
+
     print('Outputs', ['differ', 'are identical'][int(ret)])
-    if diff_tool is not None:
-        lydiff.difftool(diff_tool, tmp_files, dryrun)
+
+    # optionally perform a textual diff
+    lydiff.do_diff(opt)
+
     return not ret
 
 

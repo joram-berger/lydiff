@@ -73,6 +73,26 @@ def configure(opt):
         'commands': commands
         }
 
+
+# plausibility checks
+def check_empty_comparison(opt):
+    """Check for unnecessary comparison that can't produce different files."""
+    result = equal(opt['input_files']) and equal(opt['target_versions']) and equal(opt['convert'])
+    if result:
+        print("Warning: Equal input_files won't generate differences")
+    return result
+
+def check_available_versions(opt):
+    """Check and warn if fallback LilyPond versions will be used."""
+    target_versions = opt['target_versions']
+    lily_versions = opt['lily_versions']
+    for i in [0, 1]:
+        if target_versions[i] != lily_versions[i] and target_versions[i] != 'latest':
+            print("Warning: LilyPond %s is not available. File %d %r will be run using version %s instead." %
+                  (target_versions[i], i+1, opt['input_files'][i], lily_versions[i]))
+
+
+
 def getfileversion(file):
     version = None
     with open(file) as f:
@@ -85,44 +105,41 @@ def getfileversion(file):
 def equal(pair):
     return pair[0] == pair[1]
 
-def difftool(tool, files, dry):
-    if dry:
-        print('- Run diff:    ', tool, *files)
-    else:
-        if tool.startswith('diff'):
+
+
+def runconvert(opt):
+    for i in [0, 1]:
+        cmd = [opt['convert_lys'][i], '-c', opt['input_files'][i]]
+        fileout = opt['tmp_files'][i]
+        if opt['dryrun']:
+            print("- Run convert: ", ' '.join(cmd), '>', fileout)
+        else:
+            with open(fileout, 'w') as f:
+                if opt['show_output']:
+                    print('-'*48)
+                    subprocess.call(cmd, stdout=f)
+                else:
+                    subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
+
+def runlily(opt):
+    for i in [0, 1]:
+        cmd = opt['commands'][i]
+        if opt['dryrun']:
+            print('- Run LilyPond:', ' '.join(cmd))
+        elif opt['show_output']:
             print('-'*48)
-            print('diff:')
-        subprocess.call([*tool.split(), *files])
+            subprocess.call(cmd)
+        else:
+            subprocess.call(cmd, stderr=subprocess.DEVNULL)
 
 
-def runconvert(convert, filein, fileout, dry, show):
-    cmd = [convert, '-c', filein]
-    if dry:
-        print("- Run convert: ", ' '.join(cmd), '>', fileout)
-    else:
-        with open(fileout, 'w') as f:
-            if show:
-                print('-'*48)
-                subprocess.call(cmd, stdout=f)
-            else:
-                subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
-
-def runlily(cmd, dry, show):
-    if dry:
-        print('- Run LilyPond:', ' '.join(cmd))
-    elif show:
-        print('-'*48)
-        subprocess.call(cmd)
-    else:
-        subprocess.call(cmd, stderr=subprocess.DEVNULL)
-
-
-def compare(images, output, dry):
+def compare(opt):
+    images = opt['image_files']
     cmd = ['convert', *reversed(images),
            '-channel', 'red,green', '-background', 'black',
-           '-combine', '-fill', 'white', '-draw', "color 0,0 replace", output]
+           '-combine', '-fill', 'white', '-draw', "color 0,0 replace", opt['diff_file']]
     comp = ['compare', '-metric', 'AE', *images, 'null:']
-    if dry:
+    if opt['dryrun']:
         print('- Run compare: ', ' '.join([repr(s) if ' ' in s else s for s in cmd]))
         print('- Run compare: ', ' '.join(comp))
         return True
@@ -134,3 +151,13 @@ def compare(images, output, dry):
     return int(npixels) == 0
 
 
+def do_diff(opt):
+    diff_tool = opt['diff_tool']
+    if diff_tool is not None:
+        if opt['dryrun']:
+            print('- Run diff:    ', diff_tool, *opt['tmp_files'])
+        else:
+            if diff_tool.startswith('diff'):
+                print('-'*48)
+                print('diff:')
+            subprocess.call([*diff_tool.split(), *opt['tmp_files']])
