@@ -27,12 +27,13 @@ def main():
 
     try:
         opt = options()
-        versions = Versions(opt.path)
+        available_versions = Versions(opt.path)
     except Exception as e:
         print()
         print(e)
         exit(1)
 
+#    print(available_versions.versions)
 #    print(versions)
     #print(opt.versions)
     print(opt)
@@ -45,10 +46,10 @@ def main():
         if ov == 'fromfile':
             targetversions[i] = inputversions[i]
         elif ov == 'latest':
-            targetversions[i] = versions.get(ov)[0]
+            targetversions[i] = available_versions.get(ov)[0]
     targetversions = tuple(targetversions)
-    exeversions = tuple(versions.get(v)[0] for v in targetversions)
-    executables = tuple(versions.get(v)[1] for v in targetversions)
+    exeversions = tuple(available_versions.get(v)[0] for v in targetversions)
+    executables = tuple(available_versions.get(v)[1] for v in targetversions)
     convertlys = tuple(exe[:-8] + 'convert-ly' for exe in executables)
     converted = tuple('tmp-%s-%s.ly' % (b, v) for b, v in zip(inputbases, exeversions))
     for i in [0, 1]:
