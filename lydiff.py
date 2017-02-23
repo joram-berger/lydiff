@@ -28,13 +28,12 @@ def main():
 
     try:
         cli_opts = lydiff.cliopts.cli_options()
-        available_versions = Versions(cli_opts.path)
+        cli_opts.available_versions = Versions(cli_opts.path)
     except Exception as e:
         print()
         print(e)
         exit(1)
 
-    cli_opts.available_versions = available_versions
     opt = lydiff.configure(cli_opts)
 
     quiet = opt['quiet']
