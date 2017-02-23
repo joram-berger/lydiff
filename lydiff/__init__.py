@@ -105,6 +105,19 @@ def getfileversion(file):
 def equal(pair):
     return pair[0] == pair[1]
 
+def print_report(opt):
+    print("Running this:   ___ 1 _______________     ___ 2 _______________")
+    print("Files:      %25s %25s" % tuple("%s (%s)" % (i, v) for i, v in zip(opt['input_files'], opt['input_versions'])))
+    #print("convert:    %25s %25s" % tuple(['no', 'yes'][int(b)] for b in opt.convert))
+    print("target version: %21s %25s" % opt['target_versions'])
+    print("convert-ly: %25s %25s" % opt['convert_lys'])
+    print("tmp_files:  %25s %25s" % opt['tmp_files'])
+    print("executable: %25s %25s" % opt['executables'])
+    print("images:     %25s %25s" % opt['image_files'])
+    print("output:     %45s" % opt['diff_file'])
+    print("Run tools ... ", end='', flush=True)
+
+
 
 
 def runconvert(opt):
