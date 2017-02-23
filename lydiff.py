@@ -39,7 +39,6 @@ def main():
 
     quiet = opt['quiet']
     dryrun = opt['dryrun']
-    convert = opt['convert']
     show_output = opt['show_output']
 
     if lydiff.check_empty_comparison(opt):
@@ -53,7 +52,8 @@ def main():
         lydiff.print_report(opt)
     if dryrun or show_output:
         print()
-        
+
+    lydiff.purge_dirs(opt)
     lydiff.runconvert(opt)
     lydiff.runlily(opt)
 
@@ -68,6 +68,9 @@ def main():
 
     # optionally perform a textual diff
     lydiff.do_diff(opt)
+
+    if not opt['keep_intermediate_files']:
+        lydiff.purge_temporary_files(opt)
 
     return not ret
 

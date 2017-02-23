@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import glob
 import subprocess
 
 def configure(opt):
@@ -80,6 +81,7 @@ def configure(opt):
         'executables': executables,
         'convert_lys': convert_lys,
         'convert': opt.convert,
+        'keep_intermediate_files': opt.keep_intermediate_files,
         'quiet': opt.quiet,
         'dryrun': opt.dryrun,
         'show_output': opt.showoutput,
@@ -131,8 +133,44 @@ def print_report(opt):
     print("Run tools ... ", end='', flush=True)
 
 
+def find_temporary_files(opt):
+    """Return a list with all temporary files.
+       A comprehensive list of potential file names is tested,
+       but only those actually existing are returned as a list."""
+    files = [glob.glob(
+               "{}*".format(
+                    os.path.join(opt['input_paths'][i], opt['tmp_files'][i])))
+            for i in [0, 1]]
+    result = files[0]
+    result.extend(files[1])
+    return result
 
+def _delete_temporary_files(opt):
+    """Find existing and remove the tmp files."""
+    del_list = find_temporary_files(opt)
+    if opt['dryrun'] or opt['show_output']:
+        print(" - " + "\n - ".join(del_list))
+    for f in del_list:
+        os.remove(f)
+    
+def purge_dirs(opt):
+    """Purge files that are to be generated, so in case of interruption
+       there are no 'old' files confusing the output."""
+    if not opt['quiet']:
+        print("Purge old files:")
+    _delete_temporary_files(opt)
+    outfile = os.path.join(opt['input_paths'][0], opt['diff_file'])
+    if os.path.exists(outfile):
+        if opt['dryrun'] or opt['show_output']:
+            print(" - {}".format(outfile))
+        os.remove(outfile)
 
+def purge_temporary_files(opt):
+    """Remove temporary files at the end."""
+    if not opt['quiet']:
+        print("Purge temporary files:")
+    _delete_temporary_files(opt)
+    
 def runconvert(opt):
     for i in [0, 1]:
         path = opt['input_paths'][i]

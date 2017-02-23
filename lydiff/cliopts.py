@@ -81,6 +81,8 @@ def cli_options():
         help='additional command line options for lilypond')
     parser.add_argument('-t', '--test', action='store_true',
         help='Do not generate files just print the actions')
+    parser.add_argument('-k', '--keep-intermediate-files', action='store_true',
+        help='Keep intermediate files instead of removing them')
     parser.add_argument('-d', '--diff', type=str, default=config['diff'],
         help="diff the converted inputs using diff (diff or meld)")
     parser.add_argument('-s', '--showoutput', action='store_true',
