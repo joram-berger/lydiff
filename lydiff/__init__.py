@@ -77,10 +77,7 @@ def configure(opt):
 # plausibility checks
 def check_empty_comparison(opt):
     """Check for unnecessary comparison that can't produce different files."""
-    result = equal(opt['input_files']) and equal(opt['target_versions']) and equal(opt['convert'])
-    if result:
-        print("Warning: Equal input_files won't generate differences")
-    return result
+    return equal(opt['input_files']) and equal(opt['target_versions']) and equal(opt['convert'])
 
 def check_available_versions(opt):
     """Check and warn if fallback LilyPond versions will be used."""

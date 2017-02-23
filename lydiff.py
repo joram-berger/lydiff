@@ -43,6 +43,9 @@ def main():
     show_output = opt['show_output']
 
     if lydiff.check_empty_comparison(opt):
+        print()
+        print("Warning: Equal input_files won't generate differences. Aborting.")
+        print()
         exit()
     lydiff.check_available_versions(opt)
     
