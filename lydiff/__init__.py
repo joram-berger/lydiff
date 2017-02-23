@@ -50,11 +50,11 @@ def configure(opt):
     diff_file = opt.output
     if diff_file is None:
         if equal(input_files):
-            diff_file = 'diff_%s_%s-%s.png' % (input_basenames[0], *lily_versions)
+            diff_file = 'diff_%s_%s-%s' % (input_basenames[0], *lily_versions)
         elif equal(target_versions):
-            diff_file = 'diff_%s-%s_%s.png' % (*input_basenames, lily_versions[0])
+            diff_file = 'diff_%s-%s_%s' % (*input_basenames, lily_versions[0])
         else:
-            diff_file = 'diff_%s-%s_%s-%s.png' % (*input_basenames, *lily_versions)
+            diff_file = 'diff_%s-%s_%s-%s' % (*input_basenames, *lily_versions)
 
     # LilyPond command line
     lily_options = [l.replace('~', os.path.expanduser('~')) for l in opt.lilypondoptions]
@@ -200,24 +200,63 @@ def runlily(opt):
 
 
 def compare(opt):
+    changes = []
     images = tuple(
-        [os.path.join(opt['input_paths'][i], opt['tmp_files'][i] + '.png')
+        [glob.glob(os.path.join(opt['input_paths'][i], opt['tmp_files'][i] + '*.png'))
          for i in [0, 1]])
-    outfile = os.path.join(opt['input_paths'][0], opt['diff_file'])
-    cmd = ['convert', *reversed(images),
-           '-channel', 'red,green', '-background', 'black',
-           '-combine', '-fill', 'white', '-draw', "color 0,0 replace", outfile]
-    comp = ['compare', '-metric', 'AE', *images, 'null:']
+    for i in [0, 1]:
+        images[i].sort()
+    image_pairs = list(zip(images[0], images[1]))
+    from_count = len(images[0])
+    to_count = len(images[1])
+    page_count = max(from_count, to_count)
+
+    if page_count == 1:
+        outfiles = [os.path.join(opt['input_paths'][0], "{}.png".format(opt['diff_file']))]
+    else:
+        outfiles = [os.path.join(opt['input_paths'][0], "{}-{}.png".format(
+            opt['diff_file'], i + 1))
+            for i in range(page_count)]
+
+    # first process actual image pairs
+    for i in range(len(image_pairs)):
+        images = image_pairs[i]
+        conv = ['convert', *reversed(images),
+               '-channel', 'red,green', '-background', 'black',
+               '-combine', '-fill', 'white', '-draw', "color 0,0 replace", outfiles[i]]
+        comp = ['compare', '-metric', 'AE', *images, 'null:']
+        if opt['dryrun'] or opt['show_output']:
+            print('- Run convert: ', ' '.join([repr(s) if ' ' in s else s for s in conv]))
+            print('- Run compare: ', ' '.join(comp))
+        if not opt['dryrun']:
+            subprocess.call(conv)
+            process = subprocess.Popen(comp, stderr=subprocess.PIPE)
+            _, npixels = process.communicate()
+            changes.append(int(npixels))
+
+    # process trailing pages if one score is longer than the other
+    tail = int(to_count > from_count)
+    diff_base = os.path.join(opt['input_paths'][0], opt['diff_file'])
+    for i in range(len(image_pairs), page_count):
+        from_file = os.path.join(
+            opt['input_paths'][0],
+            "{}-page{}.png".format(opt['tmp_files'][tail], i + 1))
+        if opt['dryrun']:
+            print("Copy page file {}".format(i + 1))
+        else:
+            # TODO: instead of copying the original file it would be better
+            # to also convert it changing the color to the proper one
+            # corresponding to the longer score
+            import shutil
+            shutil.copy2(from_file, "{}-{}.png".format(diff_base, i + 1))
+
     if opt['dryrun']:
-        print('- Run compare: ', ' '.join([repr(s) if ' ' in s else s for s in cmd]))
-        print('- Run compare: ', ' '.join(comp))
         return True
 
-    subprocess.call(cmd)
-    process = subprocess.Popen(comp, stderr=subprocess.PIPE)
-    _, npixels = process.communicate()
-    #print(_, int(npixels))
-    return int(npixels) == 0
+    if len(images[0]) != len(images[1]):
+        return False
+    else:
+        return sum(npixels) == 0
 
 
 def do_diff(opt):

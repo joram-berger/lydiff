@@ -7,7 +7,7 @@ Open issues for the `lydiff` tool. In this early state of the development, it is
 **Status**: open
 
 ### Handle multipage scores
-**Status**: open
+**Status**: should be fixed but needs to be tested
 
 ### Allow options for `diff`
 This is possible in quotes: `-d "diff -u"`.
