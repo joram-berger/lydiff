@@ -5,10 +5,13 @@ What is lydiff? TBD
 ## Requirements
 
 For Ubuntu and other Debian based Linux distributions, all requirements can be
-installed via `sudo apt install python3 python3-yaml imagemagick lilypond meld`.
+installed via `sudo apt install python3 imagemagick lilypond`.
 
-`python3-yaml` is an optional dependency that is only required when using a
-configuration file.
+#### Optional dependencies
+
+* For using a configuration file `python3-yaml` is required.
+* For the execution of a diff of the sources a diff tool (e.g. `meld`) has to be present.
+* If `pdftk` is installed multi-page comparison files are collated to a single PDF
 
 ## Installation
 
