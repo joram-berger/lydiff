@@ -7,6 +7,18 @@ def configure(opt):
     """Configure process, based on given options determine names,
     paths and operations."""
 
+    def get_paths_and_files(input_files):
+        current_dir = os.getcwd()
+        paths = []
+        files = []
+        basenames = []
+        for i in [0, 1]:
+            real_path = os.path.normpath(os.path.realpath(os.path.join(current_dir, input_files[i])))
+            paths.append(os.path.dirname(real_path))
+            files.append(real_path)
+            basenames.append(os.path.splitext(os.path.basename(real_path))[0])
+        return (tuple(paths), tuple(files), tuple(basenames))
+        
     def get_target_versions(versions, av):
         result = versions
         for i, ov in enumerate(versions):
@@ -23,8 +35,7 @@ def configure(opt):
         return (exe_versions, binaries)
 
     # input files
-    input_files = tuple(opt.files)
-    input_basenames = tuple(os.path.splitext(f)[0] for f in input_files)
+    input_paths, input_files, input_basenames = get_paths_and_files(opt.files)
 
     # LilyPond versions
     input_versions = tuple(getfileversion(f) for f in input_files)
@@ -34,8 +45,7 @@ def configure(opt):
 
     # temp and output files
     convert_lys = tuple(os.path.join(os.path.dirname(exe), 'convert-ly') for exe in executables)    
-    tmp_files = tuple('tmp-%s-%s.ly' % (b, v) for b, v in zip(input_basenames, lily_versions))
-    image_files = tuple(f.replace('.ly', '.png') for f in tmp_files)
+    tmp_files = tuple('tmp-%s-%s' % (b, v) for b, v in zip(input_basenames, lily_versions))
     diff_file = opt.output
     if diff_file is None:
         if equal(input_files):
@@ -47,12 +57,20 @@ def configure(opt):
 
     # LilyPond command line
     lily_options = [l.replace('~', os.path.expanduser('~')) for l in opt.lilypondoptions]
-    commands = (
-        [executables[0]] + lily_options[0].split() + ['--png', '-dresolution=%d' % opt.resolution, '-danti-alias-factor=2', '-o', image_files[0][:-4], tmp_files[0]],
-        [executables[1]] + lily_options[1].split() + ['--png', '-dresolution=%d' % opt.resolution, '-danti-alias-factor=2', '-o', image_files[1][:-4], tmp_files[1]],
+    commands = tuple(
+        [[executables[i]] +
+         lily_options[i].split() +
+         ['--png',
+          '-dresolution=%d' % opt.resolution,
+          '-danti-alias-factor=2',
+          '-o',
+          os.path.join(input_paths[i], tmp_files[i]),
+          os.path.join(input_paths[i], tmp_files[i] + '.ly')]
+          for i in [0, 1]]
     )
 
     return {
+        'input_paths': input_paths,
         'input_files': input_files,
         'input_basenames': input_basenames,
         'input_versions': input_versions,
@@ -67,7 +85,6 @@ def configure(opt):
         'show_output': opt.showoutput,
         'diff_tool': opt.diff,
         'tmp_files': tmp_files,
-        'image_files': image_files,
         'diff_file': diff_file,
         'lily_options': lily_options, # is this actually used?
         'commands': commands
@@ -110,7 +127,6 @@ def print_report(opt):
     print("convert-ly: %25s %25s" % opt['convert_lys'])
     print("tmp_files:  %25s %25s" % opt['tmp_files'])
     print("executable: %25s %25s" % opt['executables'])
-    print("images:     %25s %25s" % opt['image_files'])
     print("output:     %45s" % opt['diff_file'])
     print("Run tools ... ", end='', flush=True)
 
@@ -119,8 +135,10 @@ def print_report(opt):
 
 def runconvert(opt):
     for i in [0, 1]:
-        cmd = [opt['convert_lys'][i], '-c', opt['input_files'][i]]
-        fileout = opt['tmp_files'][i]
+        path = opt['input_paths'][i]
+        infile = os.path.join(path, opt['input_files'][i])
+        cmd = [opt['convert_lys'][i], '-c', infile]
+        fileout = os.path.join(path, opt['tmp_files'][i] + '.ly')
         if opt['dryrun']:
             print("- Run convert: ", ' '.join(cmd), '>', fileout)
         else:
@@ -144,10 +162,13 @@ def runlily(opt):
 
 
 def compare(opt):
-    images = opt['image_files']
+    images = tuple(
+        [os.path.join(opt['input_paths'][i], opt['tmp_files'][i] + '.png')
+         for i in [0, 1]])
+    outfile = os.path.join(opt['input_paths'][0], opt['diff_file'])
     cmd = ['convert', *reversed(images),
            '-channel', 'red,green', '-background', 'black',
-           '-combine', '-fill', 'white', '-draw', "color 0,0 replace", opt['diff_file']]
+           '-combine', '-fill', 'white', '-draw', "color 0,0 replace", outfile]
     comp = ['compare', '-metric', 'AE', *images, 'null:']
     if opt['dryrun']:
         print('- Run compare: ', ' '.join([repr(s) if ' ' in s else s for s in cmd]))
@@ -163,11 +184,14 @@ def compare(opt):
 
 def do_diff(opt):
     diff_tool = opt['diff_tool']
+    diff_files = tuple(
+        [os.path.join(opt['input_paths'][i], opt['tmp_files'][i] + '.ly')
+         for i in [0, 1]])
     if diff_tool is not None:
         if opt['dryrun']:
-            print('- Run diff:    ', diff_tool, *opt['tmp_files'])
+            print('- Run diff:    ', diff_tool, *diff_files)
         else:
             if diff_tool.startswith('diff'):
                 print('-'*48)
                 print('diff:')
-            subprocess.call([*diff_tool.split(), *opt['tmp_files']])
+            subprocess.call([*diff_tool.split(), *diff_files])
