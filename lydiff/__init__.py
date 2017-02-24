@@ -160,11 +160,13 @@ def purge_dirs(opt):
     if not opt['quiet']:
         print("Purge old files:")
     _delete_temporary_files(opt)
-    outfile = os.path.join(opt['input_paths'][0], opt['diff_file'])
-    if os.path.exists(outfile):
+    outfile_base = os.path.join(opt['input_paths'][0], opt['diff_file'])
+    outfiles = glob.glob("{}*".format(outfile_base))
+    for f in outfiles:
         if opt['dryrun'] or opt['show_output']:
-            print(" - {}".format(outfile))
-        os.remove(outfile)
+            print(" - {}".format(f))
+        if not opt['dryrun']:
+            os.remove(f)
 
 def purge_temporary_files(opt):
     """Remove temporary files at the end."""
