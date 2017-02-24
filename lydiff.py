@@ -59,7 +59,13 @@ def main():
     if show_output:
         print('-'*48)
 
-    ret = lydiff.compare(opt)
+    try:
+        ret = lydiff.compare(opt)
+    except FileNotFoundError as e:
+        print("\n", e)
+        print("Temporary files are *not* purged, please inspect. Aborting")
+        exit(1)
+
     if not quiet:
         print('done')
 

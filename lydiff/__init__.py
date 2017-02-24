@@ -133,13 +133,14 @@ def print_report(opt):
     print("Run tools ... ", end='', flush=True)
 
 
-def find_temporary_files(opt):
+def find_temporary_files(opt, ext=""):
     """Return a list with all temporary files.
        A comprehensive list of potential file names is tested,
        but only those actually existing are returned as a list."""
     files = [glob.glob(
-               "{}*".format(
-                    os.path.join(opt['input_paths'][i], opt['tmp_files'][i])))
+               "{}*{}".format(
+                    os.path.join(opt['input_paths'][i], opt['tmp_files'][i]),
+                    ext))
             for i in [0, 1]]
     result = files[0]
     result.extend(files[1])
@@ -207,9 +208,20 @@ def compare(opt):
     for i in [0, 1]:
         images[i].sort()
     image_pairs = list(zip(images[0], images[1]))
-    from_count = len(images[0])
-    to_count = len(images[1])
-    page_count = max(from_count, to_count)
+    # number of pages for both scores
+    page_counts = (len(images[0]), len(images[1]))
+    # page count for longer score (if different)
+    page_count = max(page_counts[0], page_counts[1])
+
+    if page_counts[0] == 0 or page_counts[1] == 0:
+        # one or both LilyPond compilations failed
+        files = ["\n - {} ({})".format(
+            os.path.basename(opt['input_files'][i]),
+            opt['lily_versions'][i])
+            for i in [0, 1]
+            if page_counts[i] == 0]
+        msg = "LilyPond failed to produce score(s) from file(s):{}".format("".join(files))
+        raise FileNotFoundError(msg)
 
     if page_count == 1:
         outfiles = [os.path.join(opt['input_paths'][0], "{}.png".format(opt['diff_file']))]
@@ -235,7 +247,7 @@ def compare(opt):
             changes.append(int(npixels))
 
     # process trailing pages if one score is longer than the other
-    tail = int(to_count > from_count)
+    tail = int(page_counts[1] > page_counts[0])
     diff_base = os.path.join(opt['input_paths'][0], opt['diff_file'])
     for i in range(len(image_pairs), page_count):
         from_file = os.path.join(
