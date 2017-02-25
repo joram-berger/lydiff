@@ -4,6 +4,13 @@ import os
 import glob
 import subprocess
 
+class LyDiff(object):
+
+    def __init__(self, options):
+        self.options = options
+
+        
+
 def configure(opt):
     """Configure process, based on given options determine names,
     paths and operations."""

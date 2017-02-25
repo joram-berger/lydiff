@@ -27,6 +27,10 @@ from lydiff import cliopts
 def main():
 
     try:
+        runner = lydiff.LyDiff(lydiff.cliopts.CliOptions())
+        print(runner.options)
+        exit()
+        
         cli_opts = lydiff.cliopts.cli_options()
         cli_opts.available_versions = Versions(cli_opts.path)
     except Exception as e:
