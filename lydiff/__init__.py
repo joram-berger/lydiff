@@ -43,6 +43,47 @@ class LyDiff(object):
                       (target_versions[i], i+1, self.options.input_files[i], lily_versions[i]))
         return result
 
+    def find_temporary_files(self, ext=""):
+        """Return a list with all temporary files.
+           A comprehensive list of potential file names is tested,
+           but only those actually existing are returned as a list."""
+        files = [glob.glob(
+                   "{}*{}".format(
+                        os.path.join(self.options.input_paths[i], self.options.tmp_files[i]),
+                        ext))
+                for i in [0, 1]]
+        result = files[0]
+        result.extend(files[1])
+        return result
+
+    def _delete_temporary_files(self):
+        """Find existing and remove the tmp files."""
+        del_list = self.find_temporary_files()
+        if self.options.dryrun or self.options.show_output:
+            print(" - " + "\n - ".join(del_list))
+        for f in del_list:
+            os.remove(f)
+        
+    def purge_dirs(self):
+        """Purge files that are to be generated, so in case of interruption
+           there are no 'old' files confusing the output."""
+        result = ["Purge old files:"]
+        self._delete_temporary_files()
+        outfile_base = os.path.join(self.options.input_paths[0], self.options.diff_file)
+        outfiles = glob.glob("{}*".format(outfile_base))
+        for f in outfiles:
+            if self.options.dryrun or self.options.show_output:
+                result.append(" - {}".format(f))
+            if not self.options.dryrun:
+                os.remove(f)
+        return result
+
+    def purge_temporary_files(self):
+        """Remove temporary files at the end."""
+        if not self.options.quiet:
+            print("Purge temporary files:")
+        self._delete_temporary_files()
+        
 
 
 def getfileversion(file):
@@ -58,47 +99,6 @@ def equal(pair):
     return pair[0] == pair[1]
 
 
-def find_temporary_files(opt, ext=""):
-    """Return a list with all temporary files.
-       A comprehensive list of potential file names is tested,
-       but only those actually existing are returned as a list."""
-    files = [glob.glob(
-               "{}*{}".format(
-                    os.path.join(opt['input_paths'][i], opt['tmp_files'][i]),
-                    ext))
-            for i in [0, 1]]
-    result = files[0]
-    result.extend(files[1])
-    return result
-
-def _delete_temporary_files(opt):
-    """Find existing and remove the tmp files."""
-    del_list = find_temporary_files(opt)
-    if opt['dryrun'] or opt['show_output']:
-        print(" - " + "\n - ".join(del_list))
-    for f in del_list:
-        os.remove(f)
-    
-def purge_dirs(opt):
-    """Purge files that are to be generated, so in case of interruption
-       there are no 'old' files confusing the output."""
-    if not opt['quiet']:
-        print("Purge old files:")
-    _delete_temporary_files(opt)
-    outfile_base = os.path.join(opt['input_paths'][0], opt['diff_file'])
-    outfiles = glob.glob("{}*".format(outfile_base))
-    for f in outfiles:
-        if opt['dryrun'] or opt['show_output']:
-            print(" - {}".format(f))
-        if not opt['dryrun']:
-            os.remove(f)
-
-def purge_temporary_files(opt):
-    """Remove temporary files at the end."""
-    if not opt['quiet']:
-        print("Purge temporary files:")
-    _delete_temporary_files(opt)
-    
 def runconvert(opt):
     for i in [0, 1]:
         path = opt['input_paths'][i]

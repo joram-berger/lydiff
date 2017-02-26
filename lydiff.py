@@ -41,6 +41,11 @@ def main():
         for v in vm:
             print(v)
 
+    purge = lyDiff.purge_dirs()
+    if not lyDiff.options.quiet:
+        print('\n'.join(purge))
+
+
     exit()
     
     quiet = opt['quiet']
