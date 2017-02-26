@@ -84,6 +84,22 @@ class LyDiff(object):
             print("Purge temporary files:")
         self._delete_temporary_files()
         
+    def run_convert(self):
+        for i in [0, 1]:
+            path = self.options.input_paths[i]
+            infile = os.path.join(path, self.options.input_files[i])
+            cmd = [self.options.convert_lys[i], '-c', infile]
+            fileout = os.path.join(path, self.options.tmp_files[i] + '.ly')
+            if self.options.dryrun:
+                print("- Run convert: ", ' '.join(cmd), '>', fileout)
+            else:
+                with open(fileout, 'w') as f:
+                    if self.options.show_output:
+                        print('-'*48)
+                        subprocess.call(cmd, stdout=f)
+                    else:
+                        subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
+
 
 
 def getfileversion(file):
@@ -98,22 +114,6 @@ def getfileversion(file):
 def equal(pair):
     return pair[0] == pair[1]
 
-
-def runconvert(opt):
-    for i in [0, 1]:
-        path = opt['input_paths'][i]
-        infile = os.path.join(path, opt['input_files'][i])
-        cmd = [opt['convert_lys'][i], '-c', infile]
-        fileout = os.path.join(path, opt['tmp_files'][i] + '.ly')
-        if opt['dryrun']:
-            print("- Run convert: ", ' '.join(cmd), '>', fileout)
-        else:
-            with open(fileout, 'w') as f:
-                if opt['show_output']:
-                    print('-'*48)
-                    subprocess.call(cmd, stdout=f)
-                else:
-                    subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
 
 def runlily(opt):
     for i in [0, 1]:

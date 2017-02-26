@@ -45,6 +45,7 @@ def main():
     if not lyDiff.options.quiet:
         print('\n'.join(purge))
 
+    lyDiff.run_convert()
 
     exit()
     
