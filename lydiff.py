@@ -17,17 +17,13 @@ Usage examples:
  lydiff file.ly -g a677be ffe523
 
 """
-import os
-import subprocess
 
 import lydiff
-from lydiff.lyversions import Versions
 from lydiff import cliopts
 
 def main():
 
     try:
-        # instantiate LyDiff object using CLI options
         lyDiff = lydiff.LyDiff(lydiff.cliopts.CliOptions())
     except Exception as e:
         exit("\n{}\n".format(e))
@@ -68,4 +64,4 @@ def main():
     return not ret
 
 if __name__ == "__main__":
-    exit(main())
+    main()
