@@ -46,6 +46,7 @@ def main():
         print('\n'.join(purge))
 
     lyDiff.run_convert()
+    lyDiff.run_lily()
 
     exit()
     

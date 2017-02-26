@@ -100,6 +100,18 @@ class LyDiff(object):
                     else:
                         subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
 
+    def run_lily(self):
+        for i in [0, 1]:
+            cmd = self.options.commands[i]
+            if self.options.dryrun:
+                print('- Run LilyPond:', ' '.join(cmd))
+            elif self.options.show_output:
+                print('-'*48)
+                subprocess.call(cmd)
+            else:
+                subprocess.call(cmd, stderr=subprocess.DEVNULL)
+
+
 
 
 def getfileversion(file):
@@ -113,18 +125,6 @@ def getfileversion(file):
 
 def equal(pair):
     return pair[0] == pair[1]
-
-
-def runlily(opt):
-    for i in [0, 1]:
-        cmd = opt['commands'][i]
-        if opt['dryrun']:
-            print('- Run LilyPond:', ' '.join(cmd))
-        elif opt['show_output']:
-            print('-'*48)
-            subprocess.call(cmd)
-        else:
-            subprocess.call(cmd, stderr=subprocess.DEVNULL)
 
 
 def compare(opt):
