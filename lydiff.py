@@ -30,7 +30,6 @@ def main():
         # instantiate LyDiff object using CLI options
         lyDiff = lydiff.LyDiff(lydiff.cliopts.CliOptions())
     except Exception as e:
-#        raise
         exit("\n{}\n".format(e))
 
     if not lyDiff.options.quiet:
@@ -54,9 +53,7 @@ def main():
     try:
         ret = lyDiff.compare()
     except FileNotFoundError as e:
-        print("\n", e)
-        print("Temporary files are *not* purged, please inspect. Aborting")
-        exit(1)
+        exit("\n{}\nTemporary files are *not* purged, please inspect. Aborting".format(e))
 
     if not lyDiff.options.quiet:
         print('done')
@@ -70,15 +67,5 @@ def main():
 
     return not ret
 
-
 if __name__ == "__main__":
     exit(main())
-    vv = Versions("/usr/bin ~/Technik/sw/ly/*/bin")
-    #print(vv)
-    #print(vv.get("2.18.0"))
-    #print(vv.get("2.18.5"))
-    #print(vv.get("2.19.53"))
-    #print(vv.get("2.20.0"))
-    #comp = ['compare', '-metric', 'AE', 'tmp-test3-2.18.2.png', 'tmp-test3-2.19.53.png', 'null:']
-    #subprocess.call(comp)
-    #import subprocess
