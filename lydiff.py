@@ -48,34 +48,17 @@ def main():
     lyDiff.run_convert()
     lyDiff.run_lily()
 
-    exit()
-    
-    quiet = opt['quiet']
-    dryrun = opt['dryrun']
-    show_output = opt['show_output']
-
-    lydiff.check_available_versions(opt)
-    
-    if not quiet:
-        lydiff.print_report(opt)
-    if dryrun or show_output:
-        print()
-
-    lydiff.purge_dirs(opt)
-    lydiff.runconvert(opt)
-    lydiff.runlily(opt)
-
-    if show_output:
+    if lyDiff.options.show_output:
         print('-'*48)
 
     try:
-        ret = lydiff.compare(opt)
+        ret = lyDiff.compare()
     except FileNotFoundError as e:
         print("\n", e)
         print("Temporary files are *not* purged, please inspect. Aborting")
         exit(1)
 
-    if not quiet:
+    if not lyDiff.options.quiet:
         print('done')
 
     print('Outputs', ['differ', 'are identical'][int(ret)])

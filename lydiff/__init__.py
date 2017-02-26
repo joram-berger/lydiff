@@ -111,6 +111,78 @@ class LyDiff(object):
             else:
                 subprocess.call(cmd, stderr=subprocess.DEVNULL)
 
+    def compare(self):
+        changes = []
+        images = tuple(
+            [glob.glob(os.path.join(self.options.input_paths[i], self.options.tmp_files[i] + '*.png'))
+             for i in [0, 1]])
+        for i in [0, 1]:
+            images[i].sort()
+        image_pairs = list(zip(images[0], images[1]))
+        # number of pages for both scores
+        page_counts = (len(images[0]), len(images[1]))
+        # page count for longer score (if different)
+        page_count = max(page_counts[0], page_counts[1])
+
+        if page_counts[0] == 0 or page_counts[1] == 0:
+            # one or both LilyPond compilations failed
+            files = ["\n - {} ({})".format(
+                os.path.basename(self.options.input_files[i]),
+                self.options.lily_versions[i])
+                for i in [0, 1]
+                if page_counts[i] == 0]
+            msg = "LilyPond failed to produce score(s) from file(s):{}".format("".join(files))
+            raise FileNotFoundError(msg)
+
+        if page_count == 1:
+            outfiles = [os.path.join(
+                self.options.input_paths[0], "{}.png".format(
+                    self.options.diff_file))]
+        else:
+            outfiles = [os.path.join(
+                self.options.input_paths[0], "{}-{}.png".format(
+                    self.options.diff_file, i + 1))
+                for i in range(page_count)]
+
+        # first process actual image pairs
+        for i in range(len(image_pairs)):
+            images = image_pairs[i]
+            conv = ['convert', *reversed(images),
+                   '-channel', 'red,green', '-background', 'black',
+                   '-combine', '-fill', 'white', '-draw', "color 0,0 replace", outfiles[i]]
+            comp = ['compare', '-metric', 'AE', *images, 'null:']
+            if self.options.dryrun or self.options.show_output:
+                print('- Run convert: ', ' '.join([repr(s) if ' ' in s else s for s in conv]))
+                print('- Run compare: ', ' '.join(comp))
+            if not self.options.dryrun:
+                subprocess.call(conv)
+                process = subprocess.Popen(comp, stderr=subprocess.PIPE)
+                _, npixels = process.communicate()
+                changes.append(int(npixels))
+
+        # process trailing pages if one score is longer than the other
+        tail = int(page_counts[1] > page_counts[0])
+        diff_base = os.path.join(self.options.input_paths[0], self.options.diff_file)
+        for i in range(len(image_pairs), page_count):
+            from_file = os.path.join(
+                self.options.input_paths[0],
+                "{}-page{}.png".format(self.options.tmp_files[tail], i + 1))
+            if self.options.dryrun:
+                print("Copy page file {}".format(i + 1))
+            else:
+                # TODO: instead of copying the original file it would be better
+                # to also convert it changing the color to the proper one
+                # corresponding to the longer score
+                import shutil
+                shutil.copy2(from_file, "{}-{}.png".format(diff_base, i + 1))
+
+        if self.options.dryrun:
+            return True
+
+        if len(images[0]) != len(images[1]):
+            return False
+        else:
+            return sum(npixels) == 0
 
 
 
@@ -127,75 +199,6 @@ def equal(pair):
     return pair[0] == pair[1]
 
 
-def compare(opt):
-    changes = []
-    images = tuple(
-        [glob.glob(os.path.join(opt['input_paths'][i], opt['tmp_files'][i] + '*.png'))
-         for i in [0, 1]])
-    for i in [0, 1]:
-        images[i].sort()
-    image_pairs = list(zip(images[0], images[1]))
-    # number of pages for both scores
-    page_counts = (len(images[0]), len(images[1]))
-    # page count for longer score (if different)
-    page_count = max(page_counts[0], page_counts[1])
-
-    if page_counts[0] == 0 or page_counts[1] == 0:
-        # one or both LilyPond compilations failed
-        files = ["\n - {} ({})".format(
-            os.path.basename(opt['input_files'][i]),
-            opt['lily_versions'][i])
-            for i in [0, 1]
-            if page_counts[i] == 0]
-        msg = "LilyPond failed to produce score(s) from file(s):{}".format("".join(files))
-        raise FileNotFoundError(msg)
-
-    if page_count == 1:
-        outfiles = [os.path.join(opt['input_paths'][0], "{}.png".format(opt['diff_file']))]
-    else:
-        outfiles = [os.path.join(opt['input_paths'][0], "{}-{}.png".format(
-            opt['diff_file'], i + 1))
-            for i in range(page_count)]
-
-    # first process actual image pairs
-    for i in range(len(image_pairs)):
-        images = image_pairs[i]
-        conv = ['convert', *reversed(images),
-               '-channel', 'red,green', '-background', 'black',
-               '-combine', '-fill', 'white', '-draw', "color 0,0 replace", outfiles[i]]
-        comp = ['compare', '-metric', 'AE', *images, 'null:']
-        if opt['dryrun'] or opt['show_output']:
-            print('- Run convert: ', ' '.join([repr(s) if ' ' in s else s for s in conv]))
-            print('- Run compare: ', ' '.join(comp))
-        if not opt['dryrun']:
-            subprocess.call(conv)
-            process = subprocess.Popen(comp, stderr=subprocess.PIPE)
-            _, npixels = process.communicate()
-            changes.append(int(npixels))
-
-    # process trailing pages if one score is longer than the other
-    tail = int(page_counts[1] > page_counts[0])
-    diff_base = os.path.join(opt['input_paths'][0], opt['diff_file'])
-    for i in range(len(image_pairs), page_count):
-        from_file = os.path.join(
-            opt['input_paths'][0],
-            "{}-page{}.png".format(opt['tmp_files'][tail], i + 1))
-        if opt['dryrun']:
-            print("Copy page file {}".format(i + 1))
-        else:
-            # TODO: instead of copying the original file it would be better
-            # to also convert it changing the color to the proper one
-            # corresponding to the longer score
-            import shutil
-            shutil.copy2(from_file, "{}-{}.png".format(diff_base, i + 1))
-
-    if opt['dryrun']:
-        return True
-
-    if len(images[0]) != len(images[1]):
-        return False
-    else:
-        return sum(npixels) == 0
 
 
 def do_diff(opt):
