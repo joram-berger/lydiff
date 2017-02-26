@@ -4,7 +4,30 @@ import os
 import glob
 import subprocess
 
+def getfileversion(file):
+    """Retrieve the version string from a LilyPond file."""
+    version = None
+    with open(file) as f:
+        for line in f:
+            if r'\version' in line:
+                _, version, _ = line.split('"', 2)
+                break
+    return version
+
+def equal(pair):
+    """compare the elements of a tuple (or the first two elements of a list)."""
+    return pair[0] == pair[1]
+
 class LyDiff(object):
+    """
+    LyDiff is a class that performs a graphical comparison between two
+    LilyPond scores. The scores can be the same score compiled with different
+    LilyPond versions, different (Git) versions of the same score (not implemented
+    yet) or two independent scores, either compiled with the same or different
+    LilyPond version(s).
+    LyDiff is intended to be included by the standalone command line tool or
+    by arbitrary other clients (GUI application, web server etc.).
+    """    
 
     def __init__(self, options):
         self.options = options
@@ -13,7 +36,7 @@ class LyDiff(object):
 
     @property
     def task_list(self):
-        """Generate a string list with the task that are about to be executed."""
+        """Generate a string list with the tasks that are about to be executed."""
         res = []
         res.append("Running this:   ___ 1 _______________     ___ 2 _______________")
         res.append("Files:      %25s %25s" % tuple("%s (%s)" % (i, v) for i, v in zip(
@@ -85,6 +108,7 @@ class LyDiff(object):
         self._delete_temporary_files()
         
     def run_convert(self):
+        """Run convert-ly on both input files and save it as the tmp files."""
         for i in [0, 1]:
             path = self.options.input_paths[i]
             infile = os.path.join(path, self.options.input_files[i])
@@ -101,6 +125,7 @@ class LyDiff(object):
                         subprocess.call(cmd, stdout=f, stderr=subprocess.DEVNULL)
 
     def run_lily(self):
+        """Compile the two input files with LilyPond."""
         for i in [0, 1]:
             cmd = self.options.commands[i]
             if self.options.dryrun:
@@ -112,6 +137,14 @@ class LyDiff(object):
                 subprocess.call(cmd, stderr=subprocess.DEVNULL)
 
     def compare(self):
+        """
+        Compare the results of both scores using convert (from imagemagick)
+        Produce image file(s) where both scores are overlaid in green and red.
+        Properly handles single and multi page scores, even with different
+        page counts.
+        If one or both scores failed (i.e. they didn't produce at least one
+        PNG file) an exception is raised.
+        """
         changes = []
         images = tuple(
             [glob.glob(os.path.join(self.options.input_paths[i], self.options.tmp_files[i] + '*.png'))
@@ -185,6 +218,9 @@ class LyDiff(object):
             return sum(npixels) == 0
 
     def do_diff(self):
+        """
+        If set in the options run a diff against the source files after
+        convert-ly has been applied."""
         diff_tool = self.options.diff_tool
         diff_files = tuple(
             [os.path.join(self.options.input_paths[i], self.options.tmp_files[i] + '.ly')
@@ -197,15 +233,3 @@ class LyDiff(object):
                     print('-'*48)
                     print('diff:')
                 subprocess.call([*diff_tool.split(), *diff_files])
-
-def getfileversion(file):
-    version = None
-    with open(file) as f:
-        for line in f:
-            if r'\version' in line:
-                _, version, _ = line.split('"', 2)
-                break
-    return version
-
-def equal(pair):
-    return pair[0] == pair[1]
