@@ -9,7 +9,21 @@ class LyDiff(object):
     def __init__(self, options):
         self.options = options
 
-        
+    @property
+    def task_list(self):
+        """Generate a string list with the task that are about to be executed."""
+        res = []
+        res.append("Running this:   ___ 1 _______________     ___ 2 _______________")
+        res.append("Files:      %25s %25s" % tuple("%s (%s)" % (i, v) for i, v in zip(
+            self.options.input_files, self.options.input_versions)))
+        res.append("target version: %21s %25s" % self.options.target_versions)
+        res.append("convert-ly: %25s %25s" % self.options.convert_lys)
+        res.append("tmp_files:  %25s %25s" % self.options.tmp_files)
+        res.append("executable: %25s %25s" % self.options.executables)
+        res.append("output:     %45s" % self.options.diff_file)
+        res.append("Run tools ...\n")
+
+        return res
 
 def configure(opt):
     """Configure process, based on given options determine names,
@@ -127,17 +141,6 @@ def getfileversion(file):
 
 def equal(pair):
     return pair[0] == pair[1]
-
-def print_report(opt):
-    print("Running this:   ___ 1 _______________     ___ 2 _______________")
-    print("Files:      %25s %25s" % tuple("%s (%s)" % (i, v) for i, v in zip(opt['input_files'], opt['input_versions'])))
-    #print("convert:    %25s %25s" % tuple(['no', 'yes'][int(b)] for b in opt.convert))
-    print("target version: %21s %25s" % opt['target_versions'])
-    print("convert-ly: %25s %25s" % opt['convert_lys'])
-    print("tmp_files:  %25s %25s" % opt['tmp_files'])
-    print("executable: %25s %25s" % opt['executables'])
-    print("output:     %45s" % opt['diff_file'])
-    print("Run tools ... ", end='', flush=True)
 
 
 def find_temporary_files(opt, ext=""):

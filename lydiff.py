@@ -27,17 +27,20 @@ from lydiff import cliopts
 def main():
 
     try:
-        runner = lydiff.LyDiff(lydiff.cliopts.CliOptions())
-        print(runner.options)
-        exit()
+        lyDiff = lydiff.LyDiff(lydiff.cliopts.CliOptions())
         
-        cli_opts = lydiff.cliopts.cli_options()
-        cli_opts.available_versions = Versions(cli_opts.path)
+#        cli_opts = lydiff.cliopts.cli_options()
+#        cli_opts.available_versions = Versions(cli_opts.path)
     except Exception as e:
         print()
         print(e)
         exit(1)
 
+    if not lyDiff.options.quiet:
+        print('\n - '.join(lyDiff.task_list))
+
+    exit()
+    
     opt = lydiff.configure(cli_opts)
 
     quiet = opt['quiet']
