@@ -65,8 +65,8 @@ def main():
 
     lyDiff.do_diff()
 
-    if not opt['keep_intermediate_files']:
-        lydiff.purge_temporary_files(opt)
+    if not lyDiff.options.keep_intermediate_files:
+        lyDiff.purge_temporary_files()
 
     return not ret
 
