@@ -63,8 +63,7 @@ def main():
 
     print('Outputs', ['differ', 'are identical'][int(ret)])
 
-    # optionally perform a textual diff
-    lydiff.do_diff(opt)
+    lyDiff.do_diff()
 
     if not opt['keep_intermediate_files']:
         lydiff.purge_temporary_files(opt)

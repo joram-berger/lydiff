@@ -184,7 +184,19 @@ class LyDiff(object):
         else:
             return sum(npixels) == 0
 
-
+    def do_diff(self):
+        diff_tool = self.options.diff_tool
+        diff_files = tuple(
+            [os.path.join(self.options.input_paths[i], self.options.tmp_files[i] + '.ly')
+             for i in [0, 1]])
+        if diff_tool is not None:
+            if self.options.dryrun:
+                print('- Run diff:    ', diff_tool, *diff_files)
+            else:
+                if diff_tool.startswith('diff'):
+                    print('-'*48)
+                    print('diff:')
+                subprocess.call([*diff_tool.split(), *diff_files])
 
 def getfileversion(file):
     version = None
@@ -197,20 +209,3 @@ def getfileversion(file):
 
 def equal(pair):
     return pair[0] == pair[1]
-
-
-
-
-def do_diff(opt):
-    diff_tool = opt['diff_tool']
-    diff_files = tuple(
-        [os.path.join(opt['input_paths'][i], opt['tmp_files'][i] + '.ly')
-         for i in [0, 1]])
-    if diff_tool is not None:
-        if opt['dryrun']:
-            print('- Run diff:    ', diff_tool, *diff_files)
-        else:
-            if diff_tool.startswith('diff'):
-                print('-'*48)
-                print('diff:')
-            subprocess.call([*diff_tool.split(), *diff_files])
