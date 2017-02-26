@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
 Program `lydiff`
-© 2017 Joram Berger
+© 2017 Joram Berger, Urs Liska
 License: GPL3+
 
-Usage examples:
-1 .ly, 2 bin
- lydiff file.ly -l lilypond /my/other/lilypond -o diff_file.png
+Visually compares two LilyPond scores.
 
-1 .ly, 2 versionen, viele bins
- lydiff file.ly
- lydiff file.ly -v 2.18.0 2.19.50 [--convert] -i /my/paths  -o diff_file_2-18-0_2-19-50.png
-2 .ly, 1 bin/1 version
- lydiff file1.ly file2.ly -l lilypond
-3 .ly, -g commit1 commit2 -l lilypond
- lydiff file.ly -g a677be ffe523
-
+Use cases:
+a)
+1 .ly file, two LilyPond versions:
+  - fromfile (default)
+  - latest (default)
+  - specific version
+b)
+2 .ly files, one or two LilyPond versions
+c)
+2 versions of 1 .ly file (not implemented yet)
 """
 
 import lydiff
