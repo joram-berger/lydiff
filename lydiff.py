@@ -27,17 +27,19 @@ from lydiff import cliopts
 def main():
 
     try:
+        # instantiate LyDiff object using CLI options
         lyDiff = lydiff.LyDiff(lydiff.cliopts.CliOptions())
-        
-#        cli_opts = lydiff.cliopts.cli_options()
-#        cli_opts.available_versions = Versions(cli_opts.path)
     except Exception as e:
-        print()
-        print(e)
-        exit(1)
+#        raise
+        exit("\n{}\n".format(e))
 
     if not lyDiff.options.quiet:
         print('\n - '.join(lyDiff.task_list))
+
+    vm = lyDiff.check_version_mismatch()
+    if not lyDiff.options.quiet:
+        for v in vm:
+            print(v)
 
     exit()
     
@@ -47,11 +49,6 @@ def main():
     dryrun = opt['dryrun']
     show_output = opt['show_output']
 
-    if lydiff.check_empty_comparison(opt):
-        print()
-        print("Warning: Equal input_files won't generate differences. Aborting.")
-        print()
-        exit()
     lydiff.check_available_versions(opt)
     
     if not quiet:

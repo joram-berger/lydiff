@@ -8,6 +8,8 @@ class LyDiff(object):
 
     def __init__(self, options):
         self.options = options
+        if self.check_empty_comparison():
+            raise Exception("Warning: Equal input_files won't generate differences. Aborting.")
 
     @property
     def task_list(self):
@@ -24,6 +26,24 @@ class LyDiff(object):
         res.append("Run tools ...\n")
 
         return res
+
+    def check_empty_comparison(self):
+        """Check for unnecessary comparison that can't produce different files."""
+        return equal(self.options.input_files) and equal(self.options.target_versions) and equal(self.options.convert)
+
+    def check_version_mismatch(self):
+        """Check and warn if fallback LilyPond versions will be used."""
+        target_versions = self.options.target_versions
+        lily_versions = self.options.lily_versions
+        result = []
+        for i in [0, 1]:
+            if target_versions[i] != lily_versions[i] and target_versions[i] != 'latest':
+                result.append(
+                "Warning: LilyPond %s is not available. File %d %r will be run using version %s instead." %
+                      (target_versions[i], i+1, self.options.input_files[i], lily_versions[i]))
+        return result
+
+
 
 def configure(opt):
     """Configure process, based on given options determine names,
@@ -112,21 +132,6 @@ def configure(opt):
         'lily_options': lily_options, # is this actually used?
         'commands': commands
         }
-
-
-# plausibility checks
-def check_empty_comparison(opt):
-    """Check for unnecessary comparison that can't produce different files."""
-    return equal(opt['input_files']) and equal(opt['target_versions']) and equal(opt['convert'])
-
-def check_available_versions(opt):
-    """Check and warn if fallback LilyPond versions will be used."""
-    target_versions = opt['target_versions']
-    lily_versions = opt['lily_versions']
-    for i in [0, 1]:
-        if target_versions[i] != lily_versions[i] and target_versions[i] != 'latest':
-            print("Warning: LilyPond %s is not available. File %d %r will be run using version %s instead." %
-                  (target_versions[i], i+1, opt['input_files'][i], lily_versions[i]))
 
 
 
