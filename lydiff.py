@@ -43,8 +43,6 @@ def main():
 
     exit()
     
-    opt = lydiff.configure(cli_opts)
-
     quiet = opt['quiet']
     dryrun = opt['dryrun']
     show_output = opt['show_output']
