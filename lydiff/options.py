@@ -30,6 +30,7 @@ class Options(object):
         self.commands = None
         self.input_versions = None
         self.target_versions = None
+        self.git = None
         self.lily_path = None
         self.lily_versions = None
         self.executables = None
@@ -96,6 +97,16 @@ class Options(object):
             else:
                 diff_file = 'diff_%s-%s_%s-%s' % (*self.input_basenames, *self.lily_versions)
         self.diff_file = diff_file
+
+        # Git configuration
+        if opt.git is not None:
+            if not opt.git:
+                # No argument given: default for both
+                opt.git = ['HEAD', 'index']
+            elif len(opt.git) == 1:
+                # One argument given: default for second only
+                opt.git.append('index')
+            self.git = tuple([opt.git[0], opt.git[1]])
 
         # LilyPond command line
         self.lily_options = [l.replace('~', os.path.expanduser('~')) for l in opt.lilypondoptions]

@@ -42,8 +42,8 @@ class CliOptions(options.Options):
             help='Only show installed LilyPond versions under the given paths')
         parser.add_argument('-r', '--resolution', type=int, default=self._config['resolution'],
                             help="Resolution of the output image in dpi")
-        # parser.add_argument('-g', '--git', type=str, nargs=2, default=[None, None],
-        #                     help="compare file in different git revisions")
+        parser.add_argument('-g', '--git', type=str, nargs='*',
+                            help="compare file in different git revisions")
         args = parser.parse_args()
 
         if args.installed_versions:

@@ -28,6 +28,9 @@ def main():
     except Exception as e:
         exit("\n{}\n".format(e))
 
+    print(lyDiff.options.git)
+    exit()
+    
     if lyDiff.options.installed_versions:
         print(lyDiff.options.available_versions)
         exit()
