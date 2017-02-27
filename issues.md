@@ -66,6 +66,13 @@ tmp-test3-2.18.2.png -metric $met  output.png); echo $(compare tmp-test2-2.18.2.
 * Pro: clean working dir
 * Con: user cannot easily diff the temporary files
 
+*UL*: I think this is obsolete since the temporary files are purged automatically now.  
+However, what I can imagine to be useful is specifying a common output directory
+(currently the temporary files are in the directories of the two input files and the output file
+is in the directory of the first file (usually this won't make a difference, but we *can* compare
+files in different directories)). A common output directory can make sense together with the
+`--keep-temporary-files` option
+
 **Status**: open
 
 ### Implement »latest« and »stable«
