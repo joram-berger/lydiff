@@ -31,6 +31,8 @@ class LyDiff(object):
 
     def __init__(self, options):
         self.options = options
+        if options.installed_versions:
+            return
         if self.check_empty_comparison():
             raise Exception("Warning: Equal input_files won't generate differences. Aborting.")
 

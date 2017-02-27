@@ -28,6 +28,10 @@ def main():
     except Exception as e:
         exit("\n{}\n".format(e))
 
+    if lyDiff.options.installed_versions:
+        print(lyDiff.options.available_versions)
+        exit()
+
     if not lyDiff.options.quiet:
         print('\n - '.join(lyDiff.task_list))
 

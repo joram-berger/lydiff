@@ -14,7 +14,7 @@ class CliOptions(options.Options):
     def _cli_options(self):
         # commandline options
         parser = argparse.ArgumentParser(description='Diff LilyPond scores')
-        parser.add_argument('files', metavar='files', type=str, nargs='+',
+        parser.add_argument('-f', '--files', type=str, nargs='+',
             help='files to diff')
         parser.add_argument('-n', '--noconvert', action="store_true",
             help='Do not run convert-ly to update the input file to the required '
@@ -38,15 +38,21 @@ class CliOptions(options.Options):
             help='Do not show information')
         parser.add_argument('-p', '--path', type=str, default=self._config['path'],
             help="Search path for lilypond executables")
+        parser.add_argument('-i', '--installed-versions', action='store_true',
+            help='Only show installed LilyPond versions under the given paths')
         parser.add_argument('-r', '--resolution', type=int, default=self._config['resolution'],
                             help="Resolution of the output image in dpi")
         # parser.add_argument('-g', '--git', type=str, nargs=2, default=[None, None],
         #                     help="compare file in different git revisions")
         args = parser.parse_args()
 
+        if args.installed_versions:
+            # don't perform further checks, we only want the installed versions
+            return args
+
         # validate options
         args.files = self.validate_files(args.files)
-        args.versions = self. validate_versions(args.versions, args.files)
+        args.versions = self.validate_versions(args.versions, args.files)
         args.lilypondoptions = self.validate_lilypond_options(args.lilypondoptions)
         # TODO: Discuss whether a way to use "convert" 
         args.convert = [not args.noconvert] * 2

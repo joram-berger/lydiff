@@ -40,6 +40,7 @@ class Options(object):
         self.quiet = None
         self.dryrun = None
         self.show_output = None
+        self.installed_versions = None
         self._available_versions = None
 
         self._config = self._init_config()
@@ -67,6 +68,12 @@ class Options(object):
         return config
 
     def _set_options(self, opt):
+
+        # only show installed versions
+        if opt.installed_versions:
+            self.installed_versions = True
+            self.lily_path = opt.path
+            return
 
         # input files
         self.input_paths, self.input_files, self.input_basenames = self.get_paths_and_files(opt.files)
