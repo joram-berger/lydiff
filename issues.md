@@ -86,4 +86,8 @@ In order to avoid that files differ just because of the version
 appearing in the tagline the lower part of the page could be
 cut off.
 
+*UL:* I'd rather suggest to make the tagline *disappear* by injecting some code in the LilyPond files.
+Cutting it off doesn't seem reliable. I'm not sure about the injection, but it would be preferable to
+make the tagline white rather than making it disappear because it might otherwise affect the music layout.
+
 **Status**: open
