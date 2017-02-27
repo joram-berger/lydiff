@@ -100,6 +100,8 @@ class Options(object):
 
         # Git configuration
         if opt.git is not None:
+            if not 'git' in self.available_tools:
+                raise Exception('Git is not installed')            
             if not opt.git:
                 # No argument given: default for both
                 opt.git = ['HEAD', 'index']
@@ -202,6 +204,14 @@ class Options(object):
         binaries =  (versions[0][1], versions[1][1])
         return (exe_versions, binaries)
 
+    @property
+    def available_tools(self):
+        # TODO: Actually check this!!!
+        # - cache results
+        # - determine which tools are actually required
+        # - test for all of them (how to do that cross-platform?)
+        return ['git', 'imagemagick', 'pdftk', 'diff-pdf']
+        
     @property
     def available_versions(self):
         if not self._available_versions:
